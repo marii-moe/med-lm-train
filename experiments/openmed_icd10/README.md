@@ -1,6 +1,6 @@
 # OpenMed ICD-10
 
-Trains `Qwen3-1.7B` to assign ICD-10 diagnostic codes to clinical notes using LoRA RL against the [`maziyar/openmed_icd10`](https://app.primeintellect.ai/dashboard/environments/maziyar/openmed_icd10) environment.
+Trains `Qwen3-1.7B` to assign ICD-10 diagnostic codes to clinical notes using LoRA RL against the [`maziyar/OpenMed_ICD10`](https://app.primeintellect.ai/dashboard/environments/maziyar/OpenMed_ICD10) environment.
 
 > Note: This example uses 4 GPUs on a single node: 2 for training (FSDP) and 2 for inference (data parallel).
 
@@ -11,7 +11,7 @@ Trains `Qwen3-1.7B` to assign ICD-10 diagnostic codes to clinical notes using Lo
 Install the environment:
 
 ```bash
-prime env install maziyar/openmed_icd10
+prime env install maziyar/OpenMed_ICD10
 ```
 
 Verify it's installed:
@@ -25,8 +25,8 @@ uv run python -c "import openmed_icd10"
 Submit a 4-GPU RL job:
 
 ```bash
-medarc_slurm rl examples/openmed_icd10/rl.toml \
-    --output-dir output/examples/openmed-icd10 \
+medarc_slurm rl experiments/openmed_icd10/rl.toml \
+    --output-dir output/experiments/openmed-icd10 \
     --train-gpus 2 \
     --infer-gpus 2 \
     --auto-auth \
@@ -36,8 +36,8 @@ medarc_slurm rl examples/openmed_icd10/rl.toml \
 Or preview without submitting:
 
 ```bash
-medarc_slurm rl examples/openmed_icd10/rl.toml \
-    --output-dir output/examples/openmed-icd10 \
+medarc_slurm rl experiments/openmed_icd10/rl.toml \
+    --output-dir output/experiments/openmed-icd10 \
     --train-gpus 2 \
     --infer-gpus 2 \
     --auto-auth \

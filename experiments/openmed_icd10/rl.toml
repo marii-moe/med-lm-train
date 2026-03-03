@@ -20,7 +20,7 @@ max_inflight_rollouts = 256
 max_tokens = 1024
 
 [[orchestrator.env]]
-id = "maziyar/openmed_icd10"
+id = "maziyar/OpenMed_ICD10"
 name = "openmed-icd10"
 
 [trainer.model]
