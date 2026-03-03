@@ -11,9 +11,9 @@ name = "Qwen/Qwen3-1.7B"
 type = "filesystem"
 
 [orchestrator]
-token_batch_size = 65536
+token_batch_size = 131072
 rollouts_per_example = 8
-max_inflight_rollouts = 256
+max_inflight_rollouts = 512
 
 [orchestrator.sampling]
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
