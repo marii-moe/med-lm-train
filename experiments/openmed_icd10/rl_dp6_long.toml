@@ -1,0 +1,54 @@
+# ~2318740 toks per epoch
+max_steps = 424
+seq_len = 2048
+max_async_level = 3
+
+# Verify the exact HuggingFace model ID before running — Qwen3 1.7B may also
+# be available as Qwen/Qwen3-1.7B-Instruct or with a date suffix like -2507.
+[model]
+name = "Qwen/Qwen3-1.7B"
+
+[weight_broadcast]
+type = "filesystem"
+
+[orchestrator]
+token_batch_size = 131072
+rollouts_per_example = 8
+max_inflight_rollouts = 512
+
+[orchestrator.sampling]
+# Allow space for clinical-note reasoning traces before the ICD-10 code answer.
+max_tokens = 1024
+
+[[orchestrator.env]]
+id = "maziyar/OpenMed_ICD10"
+name = "openmed-icd10"
+
+[trainer.model]
+impl = "auto"
+attn = "flash_attention_3"
+
+[trainer.model.ac]
+freq = 1
+
+[trainer.model.lora]
+rank = 32
+alpha = 64
+
+[trainer.model.compile]
+
+[trainer.optim]
+lr = 1e-5
+
+[ckpt]
+
+[inference]
+gpu_memory_utilization = 0.90
+
+# dp is automatically computed as num_infer_gpus // tp if omitted
+[inference.parallel]
+dp = 6
+
+[inference.model]
+dtype = "bfloat16"
+max_model_len = 4096
