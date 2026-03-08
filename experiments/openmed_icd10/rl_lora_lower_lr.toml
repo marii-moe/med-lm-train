@@ -1,4 +1,4 @@
-max_steps = 500
+max_steps = 424
 seq_len = 2048
 max_async_level = 3
 
