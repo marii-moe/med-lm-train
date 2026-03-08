@@ -1,5 +1,4 @@
-# ~2318740 toks per epoch
-max_steps = 424
+max_steps = 500
 seq_len = 2048
 max_async_level = 3
 
