@@ -32,7 +32,7 @@ freq = 1
 
 [trainer.model.lora]
 rank = 16
-alpha = 64
+alpha = 32
 
 [trainer.model.compile]
 
@@ -46,7 +46,7 @@ gpu_memory_utilization = 0.90
 
 # dp is automatically computed as num_infer_gpus // tp if omitted
 [inference.parallel]
-dp = 6
+dp = 2
 
 [inference.model]
 dtype = "bfloat16"
