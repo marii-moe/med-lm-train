@@ -28,7 +28,6 @@ interval = 100
 id = "medarc/medconceptsqa"
 name = "medconceptsqa"
 rollouts_per_example = 3
-address = "tcp://127.0.0.1:58818"
 
 [trainer.model]
 impl = "auto"
