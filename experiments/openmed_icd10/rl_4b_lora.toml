@@ -21,10 +21,14 @@ max_tokens = 2048
 id = "maziyar/OpenMed_ICD10"
 name = "openmed-icd10"
 
+[orchestrator.eval]
+interval = 100
+
 [[orchestrator.eval.env]]
 id = "medarc/medconceptsqa"
 name = "medconceptsqa"
 rollouts_per_example = 3
+address = "tcp://127.0.0.1:58818"
 
 [trainer.model]
 impl = "auto"
