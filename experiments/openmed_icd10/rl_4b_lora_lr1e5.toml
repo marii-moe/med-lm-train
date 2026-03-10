@@ -1,0 +1,65 @@
+max_steps = 400
+seq_len = 2048
+max_async_level = 3
+
+[model]
+name = "Qwen/Qwen3-4B"
+
+[weight_broadcast]
+type = "filesystem"
+
+[orchestrator]
+token_batch_size = 131072
+rollouts_per_example = 8
+max_inflight_rollouts = 512
+
+[orchestrator.sampling]
+# Allow space for clinical-note reasoning traces before the ICD-10 code answer.
+max_tokens = 2048
+
+[[orchestrator.env]]
+id = "maziyar/OpenMed_ICD10"
+name = "openmed-icd10"
+
+[orchestrator.eval]
+interval = 100
+
+[[orchestrator.eval.env]]
+id = "medarc/medconceptsqa"
+name = "medconceptsqa"
+rollouts_per_example = 3
+
+[trainer.model]
+impl = "auto"
+attn = "flash_attention_3"
+
+[trainer.model.ac]
+freq = 1
+
+[trainer.model.lora]
+rank = 16
+alpha = 32
+
+[trainer.model.compile]
+
+[trainer.optim]
+lr = 5e-6
+
+[trainer.scheduler]
+type = "linear"
+warmup_steps = 40 #10% of max_steps, can be 5% on long training
+decay_steps = 0
+
+[ckpt]
+
+[inference]
+gpu_memory_utilization = 0.90
+
+# dp is automatically computed as num_infer_gpus // tp if omitted
+[inference.parallel]
+dp = 3
+
+[inference.model]
+max_model_len = 4096
+dtype = "bfloat16"
+
