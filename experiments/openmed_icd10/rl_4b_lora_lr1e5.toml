@@ -43,7 +43,7 @@ alpha = 32
 [trainer.model.compile]
 
 [trainer.optim]
-lr = 5e-6
+lr = 1e-5
 
 [trainer.scheduler]
 type = "linear"
