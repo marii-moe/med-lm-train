@@ -46,8 +46,9 @@ alpha = 32
 lr = 5e-6
 
 [trainer.scheduler]
-type = "constant"
+type = "linear"
 warmup_steps = 40 #10% of max_steps, can be 5% on long training
+decay_steps = 0
 
 [ckpt]
 
