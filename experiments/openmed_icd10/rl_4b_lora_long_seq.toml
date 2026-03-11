@@ -1,5 +1,5 @@
 max_steps = 52285
-seq_len = 32672
+seq_len = 16336
 max_async_level = 3
 
 [model]
@@ -37,7 +37,7 @@ attn = "flash_attention_3"
 freq = 1
 
 [trainer.model.lora]
-rank = 16
+rank = 32
 alpha = 32
 
 [trainer.model.compile]
