@@ -22,7 +22,7 @@ id = "maziyar/OpenMed_ICD10"
 name = "openmed-icd10"
 
 [orchestrator.eval]
-interval = 100
+interval = 400
 
 [[orchestrator.eval.env]]
 id = "medarc/medconceptsqa"
