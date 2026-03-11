@@ -51,6 +51,8 @@ warmup_steps = 40 #10% of max_steps, can be 5% on long training
 decay_steps = 0
 
 [ckpt]
+interval = 200
+keep_last = 2
 
 [inference]
 gpu_memory_utilization = 0.90
