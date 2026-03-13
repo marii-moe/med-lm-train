@@ -1,0 +1,77 @@
+#94 steps per epoch of sameedkhan/medconceptsqa-sample_medarc_2k
+max_steps = 375
+seq_len = 2048
+max_async_level = 3
+
+[model]
+name = "Qwen/Qwen3-4B"
+
+[weight_broadcast]
+type = "filesystem"
+
+[orchestrator]
+token_batch_size = 131072
+rollouts_per_example = 32
+max_inflight_rollouts = 64
+seq_len = 2048
+
+[orchestrator.sampling]
+# Allow space for clinical-note reasoning traces before the ICD-10 code answer.
+max_tokens = 2048
+
+[[orchestrator.env]]
+id = "maziyar/OpenMed_ICD10"
+name = "openmed-icd10"
+
+[[orchestrator.env]]
+id = "marii/medconcepts_train"
+name = "medconcepts-train"
+
+[orchestrator.buffer]
+env_ratios = [0.5, 0.5]
+
+[orchestrator.eval]
+interval = 100
+
+[[orchestrator.eval.env]]
+id = "medarc/medconceptsqa"
+name = "medconceptsqa"
+rollouts_per_example = 3
+
+[trainer.model]
+impl = "auto"
+attn = "flash_attention_3"
+seq_len = 16384
+
+[trainer.model.ac]
+freq = 1
+
+[trainer.model.lora]
+rank = 32
+alpha = 32
+
+[trainer.model.compile]
+
+[trainer.optim]
+lr = 5e-6
+
+[trainer.scheduler]
+type = "linear"
+warmup_steps = 19 #10% of max_steps, can be 5% on long training
+decay_steps = 0
+
+[ckpt]
+interval = 100
+keep_last = 2
+
+[inference]
+gpu_memory_utilization = 0.92
+
+# dp is automatically computed as num_infer_gpus // tp if omitted
+[inference.parallel]
+dp = 3
+
+[inference.model]
+max_model_len = 2048
+dtype = "bfloat16"
+
