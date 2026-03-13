@@ -19,16 +19,16 @@ seq_len = 2048
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
 max_tokens = 2048
 
-[[orchestrator.env]]
-id = "maziyar/OpenMed_ICD10"
-name = "openmed-icd10"
+#[[orchestrator.env]]
+#id = "maziyar/OpenMed_ICD10"
+#name = "openmed-icd10"
 
 [[orchestrator.env]]
 id = "marii/medconcepts_train"
 name = "medconcepts-train"
 
-[orchestrator.buffer]
-env_ratios = [0.0, 1.0]
+#[orchestrator.buffer]
+#env_ratios = [0.0, 1.0]
 
 [orchestrator.eval]
 interval = 100
