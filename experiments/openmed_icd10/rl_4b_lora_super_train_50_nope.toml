@@ -25,7 +25,7 @@ name = "openmed-icd10"
 
 [[orchestrator.env]]
 id = "marii/medconcepts_train"
-name = "medconcets_train_all_except_icd10cm"
+name = "medconcepts_train_all_except_icd10cm"
 args = { vocab = "all_except_icd10cm" }
 
 [orchestrator.buffer]

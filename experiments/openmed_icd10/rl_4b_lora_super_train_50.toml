@@ -25,7 +25,7 @@ name = "openmed-icd10"
 
 [[orchestrator.env]]
 id = "marii/medconcepts_train"
-name = "medconcets_train_icd10cm"
+name = "medconcepts_train_icd10cm"
 
 [orchestrator.buffer]
 env_ratios = [0.5, 0.5]
