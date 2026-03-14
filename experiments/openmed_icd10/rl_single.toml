@@ -1,0 +1,36 @@
+max_steps = 20
+max_async_level = 2
+
+[model]
+name = "PrimeIntellect/Qwen3-0.6B-Reverse-Text-SFT"
+
+[orchestrator]
+batch_size = 128
+rollouts_per_example = 16
+
+[orchestrator.sampling]
+max_tokens = 128
+
+[[orchestrator.env]]
+id = "marii/medconcepts_train"
+
+[trainer.model]
+attn = "flash_attention_3"
+# this is the microbatch setting, also can be set at the top of the config
+seq_len = 2048
+
+# Set this empty to enable torch.compile.
+# On a short job like this probably slows down more then it helps, but reduces memory usage and can speed up training on longer jobs.
+[trainer.model.compile]
+
+[trainer.optim]
+lr = 3e-6
+
+[ckpt]
+
+[inference]
+gpu_memory_utilization = 0.45
+
+[inference.model]
+dtype = "bfloat16"
+max_model_len = 4096
