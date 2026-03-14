@@ -15,7 +15,7 @@ max_tokens = 128
 id = "marii/medconcepts_train"
 
 [trainer.model]
-attn = "flash_attention_3"
+attn = "flash_attention_2"
 # this is the microbatch setting, also can be set at the top of the config
 seq_len = 2048
 
