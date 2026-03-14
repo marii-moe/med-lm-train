@@ -1,5 +1,5 @@
 #94 steps per epoch of sameedkhan/medconceptsqa-sample_medarc_2k
-max_steps = 188
+max_steps = 375
 seq_len = 2048
 max_async_level = 3
 
@@ -19,16 +19,17 @@ seq_len = 2048
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
 max_tokens = 2048
 
-#[[orchestrator.env]]
-#id = "maziyar/OpenMed_ICD10"
-#name = "openmed-icd10"
+[[orchestrator.env]]
+id = "maziyar/OpenMed_ICD10"
+name = "openmed-icd10"
 
 [[orchestrator.env]]
 id = "marii/medconcepts_train"
-name = "medconcets_train_icd10cm"
+name = "medconcepts-train"
+args = { vocab = "all_except_icd10cm" }
 
-#[orchestrator.buffer]
-#env_ratios = [0.0, 1.0]
+[orchestrator.buffer]
+env_ratios = [0.5, 0.5]
 
 [orchestrator.eval]
 interval = 100
