@@ -42,7 +42,7 @@ rollouts_per_example = 3
 impl = "auto"
 attn = "flash_attention_3"
 seq_len = 32768
-dtype = "bfloat16"
+optimization_dtype = "bfloat16"
 
 [trainer.model.ac]
 freq = 1
