@@ -13,7 +13,6 @@ type = "filesystem"
 token_batch_size = 131072
 rollouts_per_example = 32
 max_inflight_rollouts = 64
-seq_len = 2048
 
 [orchestrator.sampling]
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
@@ -42,7 +41,7 @@ rollouts_per_example = 3
 impl = "auto"
 attn = "flash_attention_3"
 seq_len = 16384
-optimization_dtype = "bfloat16"
+#optimization_dtype = "bfloat16"
 
 [trainer.model.ac]
 freq = 1
