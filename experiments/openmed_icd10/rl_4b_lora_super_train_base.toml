@@ -41,7 +41,8 @@ rollouts_per_example = 3
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
-seq_len = 16384
+seq_len = 32768
+dtype = "bfloat16"
 
 [trainer.model.ac]
 freq = 1
@@ -72,6 +73,6 @@ gpu_memory_utilization = 0.92
 dp = 3
 
 [inference.model]
-max_model_len = 2048
+max_model_len = 4096
 dtype = "bfloat16"
 
