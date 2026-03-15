@@ -30,13 +30,13 @@ name = "openmed-icd10"
 #[orchestrator.buffer]
 #env_ratios = [0.0, 1.0]
 
-[orchestrator.eval]
-interval = 100
+#[orchestrator.eval]
+#interval = 100
 
-[[orchestrator.eval.env]]
-id = "medarc/medconceptsqa"
-name = "medconceptsqa"
-rollouts_per_example = 3
+#[[orchestrator.eval.env]]
+#id = "medarc/medconceptsqa"
+#name = "medconceptsqa"
+#rollouts_per_example = 3
 
 [trainer.model]
 impl = "auto"
@@ -72,6 +72,6 @@ gpu_memory_utilization = 0.92
 dp = 3
 
 [inference.model]
-max_model_len = 2048
+max_model_len = 4096
 dtype = "bfloat16"
 
