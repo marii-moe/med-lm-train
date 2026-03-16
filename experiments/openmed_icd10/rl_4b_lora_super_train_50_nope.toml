@@ -40,10 +40,13 @@ name = "medconceptsqa"
 rollouts_per_example = 3
 args = { answer_format = "boxed" }
 
+[orchestrator.eval.sampling]
+max_tokens = 2560
+
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
-seq_len = 2560
+seq_len = 5120
 
 #[trainer.model.ac]
 #freq = 2
@@ -74,6 +77,6 @@ gpu_memory_utilization = 0.92
 dp = 3
 
 [inference.model]
-max_model_len = 2560
+max_model_len = 5120
 dtype = "bfloat16"
 
