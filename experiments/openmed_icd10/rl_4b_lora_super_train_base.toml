@@ -12,7 +12,7 @@ type = "filesystem"
 [orchestrator]
 token_batch_size = 131072
 rollouts_per_example = 32
-max_inflight_rollouts = 512#64
+max_inflight_rollouts = 64
 
 [orchestrator.sampling]
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
@@ -40,7 +40,7 @@ name = "medconcepts_train_icd10cm"
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
-#seq_len = 8192
+seq_len = 4096 #8192
 optimization_dtype = "bfloat16"
 
 [trainer.model.ac]
@@ -65,7 +65,7 @@ interval = 100
 keep_last = 2
 
 [inference]
-gpu_memory_utilization = 0.90 #0.92
+gpu_memory_utilization = 0.92
 
 # dp is automatically computed as num_infer_gpus // tp if omitted
 [inference.parallel]
