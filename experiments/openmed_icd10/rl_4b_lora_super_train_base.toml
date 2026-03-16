@@ -11,8 +11,8 @@ type = "filesystem"
 
 [orchestrator]
 token_batch_size = 131072
-rollouts_per_example = 32
-max_inflight_rollouts = 64
+rollouts_per_example = 8 #32
+max_inflight_rollouts = 512#64
 
 [orchestrator.sampling]
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
@@ -47,7 +47,7 @@ attn = "flash_attention_3"
 freq = 1
 
 [trainer.model.lora]
-rank = 32
+rank = 16# 32
 alpha = 32
 
 [trainer.model.compile]
@@ -65,7 +65,7 @@ interval = 100
 keep_last = 2
 
 [inference]
-gpu_memory_utilization = 0.92
+gpu_memory_utilization = 0.90 #0.92
 
 # dp is automatically computed as num_infer_gpus // tp if omitted
 [inference.parallel]
