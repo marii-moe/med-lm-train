@@ -11,9 +11,9 @@ name = "Qwen/Qwen3-4B"
 type = "filesystem"
 
 [orchestrator]
-token_batch_size = 131072
+token_batch_size = 262144
 rollouts_per_example = 8
-max_inflight_rollouts = 64
+max_inflight_rollouts = 128
 
 [orchestrator.sampling]
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
@@ -44,7 +44,6 @@ args = { answer_format = "boxed" }
 impl = "auto"
 attn = "flash_attention_3"
 seq_len = 12288
-optimization_dtype = "bfloat16"
 
 [trainer.model.ac]
 freq = 2
