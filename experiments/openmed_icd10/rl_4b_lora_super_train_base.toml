@@ -44,7 +44,7 @@ attn = "flash_attention_3"
 optimization_dtype = "bfloat16"
 
 [trainer.model.ac]
-freq = 1
+freq = 2
 
 [trainer.model.lora]
 rank = 16# 32
