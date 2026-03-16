@@ -25,17 +25,19 @@ max_tokens = 2048
 [[orchestrator.env]]
 id = "marii/medconcepts_train"
 name = "medconcepts_train_icd10cm"
+args = { answer_format = "boxed" }
 
 #[orchestrator.buffer]
 #env_ratios = [0.0, 1.0]
 
-#[orchestrator.eval]
-#interval = 100
+[orchestrator.eval]
+interval = 100
 
-#[[orchestrator.eval.env]]
-#id = "medarc/medconceptsqa"
-#name = "medconceptsqa"
-#rollouts_per_example = 3
+[[orchestrator.eval.env]]
+id = "medarc/medconceptsqa"
+name = "medconceptsqa"
+rollouts_per_example = 3
+args = { answer_format = "boxed" }
 
 [trainer.model]
 impl = "auto"
