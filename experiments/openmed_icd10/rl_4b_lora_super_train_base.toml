@@ -40,7 +40,7 @@ name = "medconcepts_train_icd10cm"
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
-seq_len = 4096 #8192
+seq_len = 8192
 optimization_dtype = "bfloat16"
 
 [trainer.model.ac]
