@@ -12,7 +12,7 @@ type = "filesystem"
 
 [orchestrator]
 token_batch_size = 131072
-rollouts_per_example = 32
+rollouts_per_example = 16
 max_inflight_rollouts = 128
 
 [orchestrator.sampling]
