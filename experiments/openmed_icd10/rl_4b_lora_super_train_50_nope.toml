@@ -1,7 +1,7 @@
 # 2100 steps per epoch of sameedkhan/medconceptsqa-sample_medarc_2k
-# ds len 258338
+# ds len 258338, seq len 2416
 max_steps = 4200
-seq_len = 2048
+seq_len = 2560
 max_async_level = 3
 
 [model]
@@ -11,13 +11,13 @@ name = "Qwen/Qwen3-4B"
 type = "filesystem"
 
 [orchestrator]
-token_batch_size = 262144
+token_batch_size = 261120
 rollouts_per_example = 8
 max_inflight_rollouts = 128
 
 [orchestrator.sampling]
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
-max_tokens = 2048
+max_tokens = 2560
 
 [[orchestrator.env]]
 id = "maziyar/OpenMed_ICD10"
@@ -32,7 +32,7 @@ args = { vocab = "all_except_icd10cm", answer_format = "boxed" }
 env_ratios = [0.5, 0.5]
 
 [orchestrator.eval]
-interval = 100
+interval = 200
 
 [[orchestrator.eval.env]]
 id = "medarc/medconceptsqa"
@@ -43,10 +43,10 @@ args = { answer_format = "boxed" }
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
-seq_len = 12288
+seq_len = 2560
 
-[trainer.model.ac]
-freq = 2
+#[trainer.model.ac]
+#freq = 2
 
 [trainer.model.lora]
 rank = 32
@@ -74,6 +74,6 @@ gpu_memory_utilization = 0.92
 dp = 3
 
 [inference.model]
-max_model_len = 2048
+max_model_len = 2560
 dtype = "bfloat16"
 

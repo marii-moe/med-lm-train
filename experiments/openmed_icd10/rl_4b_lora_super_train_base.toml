@@ -26,7 +26,7 @@ max_tokens = 2560
 [[orchestrator.env]]
 id = "marii/medconcepts_train"
 name = "medconcepts_train_icd10cm"
-args = { answer_format = "boxed", use_think = true }
+args = { answer_format = "boxed"}
 
 #[orchestrator.buffer]
 #env_ratios = [0.0, 1.0]
@@ -38,7 +38,7 @@ interval = 200
 id = "medarc/medconceptsqa"
 name = "medconceptsqa"
 rollouts_per_example = 3
-args = { answer_format = "boxed", use_think = true }
+args = { answer_format = "boxed"}
 
 [trainer.model]
 impl = "auto"
@@ -67,7 +67,7 @@ interval = 100
 keep_last = 2
 
 [inference]
-gpu_memory_utilization = 0.90
+gpu_memory_utilization = 0.92
 
 # dp is automatically computed as num_infer_gpus // tp if omitted
 [inference.parallel]
