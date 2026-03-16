@@ -12,8 +12,7 @@ type = "filesystem"
 [orchestrator]
 token_batch_size = 131072
 rollouts_per_example = 32
-max_inflight_rollouts = 64
-seq_len = 2048
+max_inflight_rollouts = 128
 
 [orchestrator.sampling]
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
@@ -26,7 +25,7 @@ name = "openmed-icd10"
 [[orchestrator.env]]
 id = "marii/medconcepts_train"
 name = "medconcepts_train_all_except_icd10cm"
-args = { vocab = "all_except_icd10cm" }
+args = { vocab = "all_except_icd10cm", answer_format = "boxed" }
 
 [orchestrator.buffer]
 env_ratios = [0.5, 0.5]
@@ -38,14 +37,16 @@ interval = 100
 id = "medarc/medconceptsqa"
 name = "medconceptsqa"
 rollouts_per_example = 3
+args = { answer_format = "boxed" }
 
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
-seq_len = 16384
+seq_len = 12288
+optimization_dtype = "bfloat16"
 
 [trainer.model.ac]
-freq = 1
+freq = 2
 
 [trainer.model.lora]
 rank = 32
@@ -58,7 +59,7 @@ lr = 5e-6
 
 [trainer.scheduler]
 type = "linear"
-warmup_steps = 19 #10% of max_steps, can be 5% on long training
+warmup_steps = 38 #10% of max_steps, can be 5% on long training
 decay_steps = 0
 
 [ckpt]
