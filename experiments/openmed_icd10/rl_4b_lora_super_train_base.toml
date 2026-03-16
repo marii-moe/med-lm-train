@@ -11,7 +11,7 @@ type = "filesystem"
 
 [orchestrator]
 token_batch_size = 131072
-rollouts_per_example = 8 #32
+rollouts_per_example = 32
 max_inflight_rollouts = 512#64
 
 [orchestrator.sampling]
@@ -29,13 +29,13 @@ name = "medconcepts_train_icd10cm"
 #[orchestrator.buffer]
 #env_ratios = [0.0, 1.0]
 
-[orchestrator.eval]
-interval = 100
+#[orchestrator.eval]
+#interval = 100
 
-[[orchestrator.eval.env]]
-id = "medarc/medconceptsqa"
-name = "medconceptsqa"
-rollouts_per_example = 3
+#[[orchestrator.eval.env]]
+#id = "medarc/medconceptsqa"
+#name = "medconceptsqa"
+#rollouts_per_example = 3
 
 [trainer.model]
 impl = "auto"
