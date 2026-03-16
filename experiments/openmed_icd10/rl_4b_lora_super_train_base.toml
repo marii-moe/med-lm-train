@@ -12,7 +12,7 @@ type = "filesystem"
 [orchestrator]
 token_batch_size = 131072
 rollouts_per_example = 32
-max_inflight_rollouts = 64
+max_inflight_rollouts = 128
 
 [orchestrator.sampling]
 # Allow space for clinical-note reasoning traces before the ICD-10 code answer.
