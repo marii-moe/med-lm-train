@@ -47,7 +47,7 @@ optimization_dtype = "bfloat16"
 freq = 2
 
 [trainer.model.lora]
-rank = 16# 32
+rank = 32
 alpha = 32
 
 [trainer.model.compile]
