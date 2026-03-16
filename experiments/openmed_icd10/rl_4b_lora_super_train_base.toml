@@ -40,6 +40,9 @@ name = "medconceptsqa"
 rollouts_per_example = 3
 args = { answer_format = "boxed"}
 
+[orchestrator.eval.sampling]
+max_tokens = 2560
+
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
