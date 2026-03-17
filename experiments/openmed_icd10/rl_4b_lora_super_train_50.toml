@@ -70,7 +70,7 @@ interval = 100
 keep_last = 2
 
 [inference]
-gpu_memory_utilization = 0.92
+gpu_memory_utilization = 0.88
 
 # dp is automatically computed as num_infer_gpus // tp if omitted
 [inference.parallel]
