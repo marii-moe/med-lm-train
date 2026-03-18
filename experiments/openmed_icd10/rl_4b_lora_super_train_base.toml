@@ -24,7 +24,7 @@ max_tokens = 2048
 #name = "openmed-icd10"
 
 [[orchestrator.env]]
-id = "marii/medconcepts_train"
+id = "marii/medconcepts-train"
 name = "medconcepts_train_icd10cm"
 args = { answer_format = "boxed"}
 
@@ -44,8 +44,8 @@ args = { answer_format = "boxed"}
 impl = "auto"
 attn = "flash_attention_3"
 
-#[trainer.model.ac]
-#freq = 2
+[trainer.model.ac]
+freq = 2
 
 [trainer.model.lora]
 rank = 32

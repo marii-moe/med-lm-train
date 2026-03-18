@@ -24,7 +24,7 @@ id = "maziyar/OpenMed_ICD10"
 name = "openmed-icd10"
 
 [[orchestrator.env]]
-id = "marii/medconcepts_train"
+id = "marii/medconcepts-train"
 name = "medconcepts_train_icd10cm"
 args = { answer_format = "boxed" }
 
