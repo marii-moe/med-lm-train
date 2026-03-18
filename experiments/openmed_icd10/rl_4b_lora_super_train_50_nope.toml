@@ -47,8 +47,8 @@ max_tokens = 2560
 impl = "auto"
 attn = "flash_attention_3"
 
-#[trainer.model.ac]
-#freq = 2
+[trainer.model.ac]
+freq = 1
 
 [trainer.model.lora]
 rank = 32

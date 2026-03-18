@@ -45,7 +45,7 @@ impl = "auto"
 attn = "flash_attention_3"
 
 [trainer.model.ac]
-freq = 2
+freq = 1
 
 [trainer.model.lora]
 rank = 32
