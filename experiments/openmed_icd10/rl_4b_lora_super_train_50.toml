@@ -39,7 +39,7 @@ name = "medconceptsqa"
 rollouts_per_example = 3
 
 [orchestrator.eval.sampling]
-max_tokens = 1024
+max_tokens = 2048
 
 [trainer.model]
 impl = "auto"
