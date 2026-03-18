@@ -48,7 +48,7 @@ attn = "flash_attention_3"
 freq = 1
 
 [trainer.model.lora]
-rank = 32
+rank = 16
 alpha = 32
 
 [trainer.model.compile]
