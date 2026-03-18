@@ -1,7 +1,7 @@
 # 2100 steps per epoch of sameedkhan/medconceptsqa-sample_medarc_2k
 # ds len 258338, seq len 2416
 max_steps = 4200
-seq_len = 1024
+seq_len = 2048
 max_async_level = 3
 
 [model]
@@ -75,5 +75,5 @@ gpu_memory_utilization = 0.90
 dp = 3
 
 [inference.model]
-max_model_len = 2048
+max_model_len = 2560
 dtype = "bfloat16"
