@@ -37,7 +37,7 @@ We fine-tune [`PrimeIntellect/Qwen3-0.6B`](https://huggingface.co/PrimeIntellect
 To train on a single GPU with `medarc_train`:
 
 ```bash
-medarc_train sft examples/reverse_text/sft.toml \
+medarc_train sft --config examples/reverse_text/sft.toml \
   --output-dir outputs/examples/reverse-sft \
   --wandb.project reverse-text --wandb.name reverse-text-sft
 ```
@@ -52,7 +52,7 @@ sft @ examples/reverse_text/sft.toml \
 To train on multiple GPUs with `medarc_train`:
 
 ```bash
-medarc_train sft examples/reverse_text/sft.toml \
+medarc_train sft --config examples/reverse_text/sft.toml \
   --output-dir outputs/examples/reverse-sft \
   --gpus 2 \
   --wandb.project reverse-text --wandb.name reverse-text-sft
@@ -79,7 +79,7 @@ The RL config uses the published [`PrimeIntellect/Qwen3-0.6B-Reverse-Text-SFT`](
 Submit a 1-GPU SFT job via `medarc_slurm`:
 
 ```bash
-medarc_slurm sft examples/reverse_text/sft.toml \
+medarc_slurm sft --config examples/reverse_text/sft.toml \
     --output-dir outputs/examples/reverse-sft \
     --gpus 1 \
     --auto-auth \
@@ -89,7 +89,7 @@ medarc_slurm sft examples/reverse_text/sft.toml \
 Or preview without submitting:
 
 ```bash
-medarc_slurm sft examples/reverse_text/sft.toml \
+medarc_slurm sft --config examples/reverse_text/sft.toml \
     --output-dir outputs/examples/reverse-sft \
     --gpus 1 \
     --auto-auth \
@@ -106,7 +106,7 @@ For RL we do 20 steps with sequence length 128. All three RL configs in this exa
 Run RL locally on a single shared GPU (assumes a 24GB GPU like a 3090 or 4090):
 
 ```bash
-medarc_train rl examples/reverse_text/rl_single.toml \
+medarc_train rl --config examples/reverse_text/rl_single.toml \
   --output-dir outputs/examples/reverse-rl \
   --single-gpu \
   --wandb.project reverse-text --wandb.name reverse-text-rl
@@ -121,7 +121,7 @@ If you have 2 GPUs, you can dedicate one to inference and one to training. This 
 With `medarc_train`:
 
 ```bash
-medarc_train rl examples/reverse_text/rl_multi.toml \
+medarc_train rl --config examples/reverse_text/rl_multi.toml \
   --output-dir outputs/examples/reverse-rl \
   --wandb.project reverse-text --wandb.name reverse-text-rl
 ```
@@ -137,7 +137,7 @@ rl @ examples/reverse_text/rl_multi.toml
 This example shares a single GPU between the trainer and vLLM inference server. The config lowers vLLM `gpu_memory_utilization` so the trainer has headroom — if you still see OOMs, reduce it further.
 
 ```bash
-medarc_slurm rl examples/reverse_text/rl_slurm.toml \
+medarc_slurm rl --config examples/reverse_text/rl_slurm.toml \
     --output-dir outputs/examples/reverse-rl \
     --single-gpu \
     --auto-auth \
@@ -147,7 +147,7 @@ medarc_slurm rl examples/reverse_text/rl_slurm.toml \
 Or preview without submitting:
 
 ```bash
-medarc_slurm rl examples/reverse_text/rl_slurm.toml \
+medarc_slurm rl --config examples/reverse_text/rl_slurm.toml \
     --output-dir outputs/examples/reverse-rl \
     --single-gpu \
     --auto-auth \
