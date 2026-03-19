@@ -26,7 +26,6 @@ name = "openmed-icd10"
 [[orchestrator.env]]
 id = "marii/medconcepts-train"
 name = "medconcepts_train_icd10cm"
-args = { answer_format = "boxed" }
 
 [orchestrator.buffer]
 env_ratios = [0.9, 0.1]
@@ -38,14 +37,17 @@ interval = 200
 id = "medarc/medconceptsqa"
 name = "medconceptsqa"
 rollouts_per_example = 3
-args = { answer_format = "boxed" }
+
+[orchestrator.eval.sampling]
+max_tokens = 2048
 
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
+seq_len = 12288
 
 [trainer.model.ac]
-freq = 1
+freq = 2
 
 [trainer.model.lora]
 rank = 32
@@ -73,5 +75,5 @@ gpu_memory_utilization = 0.90
 dp = 3
 
 [inference.model]
-max_model_len = 4096
+max_model_len = 2560
 dtype = "bfloat16"
