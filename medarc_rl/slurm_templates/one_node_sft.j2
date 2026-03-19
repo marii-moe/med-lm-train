@@ -15,6 +15,9 @@
 {% if qos %}
 #SBATCH --qos={{ qos }}
 {% endif %}
+{% if nice is not none %}
+#SBATCH --nice={{ nice }}
+{% endif %}
 {% if mail_type %}
 #SBATCH --mail-type={{ mail_type }}
 {% endif %}
