@@ -409,7 +409,7 @@ def test_sft_renders_nice_value(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     script = (output_dir / "sft.sh").read_text(encoding="utf-8")
     assert "#SBATCH --nice=100" in script
-    assert f"--nice 100 {output_dir / 'sft.sh'}" in result.output
+    assert f"--nice=100 {output_dir / 'sft.sh'}" in result.output
 
 
 def test_rl_renders_priority_mail_and_requeue_flags(tmp_path: Path) -> None:
@@ -459,7 +459,7 @@ def test_rl_renders_nice_value(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     script = (output_dir / "rl.sh").read_text(encoding="utf-8")
     assert "#SBATCH --nice=50" in script
-    assert f"--nice 50 {output_dir / 'rl.sh'}" in result.output
+    assert f"--nice=50 {output_dir / 'rl.sh'}" in result.output
 
 
 def test_sft_cpus_per_gpu_default(tmp_path: Path) -> None:

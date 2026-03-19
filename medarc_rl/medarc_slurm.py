@@ -134,7 +134,7 @@ def _submit_or_print(
     if dependency:
         sbatch_cmd.extend(["--dependency", dependency])
     if nice is not None:
-        sbatch_cmd.extend(["--nice", str(nice)])
+        sbatch_cmd.append(f"--nice={nice}")
     if test_only:
         sbatch_cmd.append("--test-only")
     sbatch_cmd.append(str(script_path))
