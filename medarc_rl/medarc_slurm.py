@@ -47,13 +47,6 @@ class QoS(StrEnum):
     TOP = "top"
 
 
-_QOS_PRIORITY: dict[QoS, int] = {
-    QoS.LOW: 200,
-    QoS.NORMAL: 400,
-    QoS.TOP: 1000,
-}
-
-
 class MailSetting(StrEnum):
     ALL = "all"
     BEGIN_END = "begin_end"
@@ -194,7 +187,7 @@ def _write_sft_outputs(
     job_name: str,
     gpus: int,
     cpus_per_gpu: int,
-    priority: int | None,
+    priority: QoS | None,
     mail_type: str | None,
     mail_user: str | None,
     slurm_resume: bool,
@@ -211,7 +204,7 @@ def _write_sft_outputs(
         hf_hub_offline=hf_hub_offline,
         gpus=gpus,
         cpus_per_gpu=cpus_per_gpu,
-        priority=priority,
+        qos=priority.value if priority is not None else None,
         mail_type=mail_type,
         mail_user=mail_user,
         slurm_resume=slurm_resume,
@@ -230,7 +223,7 @@ def _write_rl_outputs(
     gpus: int,
     single_gpu: bool,
     cpus_per_gpu: int,
-    priority: int | None,
+    priority: QoS | None,
     mail_type: str | None,
     mail_user: str | None,
     slurm_resume: bool,
@@ -252,7 +245,7 @@ def _write_rl_outputs(
         gpus=gpus,
         single_gpu=single_gpu,
         cpus_per_gpu=cpus_per_gpu,
-        priority=priority,
+        qos=priority.value if priority is not None else None,
         mail_type=mail_type,
         mail_user=mail_user,
         slurm_resume=slurm_resume,
@@ -274,8 +267,7 @@ def sft(
     cpus_per_gpu: Annotated[int, Option("--cpus-per-gpu", min=1, max=32, help="Number of CPUs to allocate per GPU (sets SLURM --cpus-per-gpu).", rich_help_panel=PANEL_COMPUTE)] = 16,
     job_name: Annotated[str | None, Option("--job-name", help="SLURM job name. Defaults to '<config stem>-sft'.", rich_help_panel=PANEL_SUBMISSION)] = None,
     account: Annotated[Account, Option("--account", help="SLURM account to pass to sbatch.", rich_help_panel=PANEL_SUBMISSION)] = Account.TRAINING,
-    priority: Annotated[QoS | None, Option("--priority", help="SLURM job priority (sets the SLURM QoS value). Only project leads can set high priority, Overridden by --job-priority if both are set.", rich_help_panel=PANEL_SUBMISSION)] = None,
-    job_priority: Annotated[int | None, Option("--job-priority", help="Explicit numeric SLURM prioritylong value. Overrides --priority when set.", rich_help_panel=PANEL_SUBMISSION)] = None,
+    priority: Annotated[QoS | None, Option("--priority", help="SLURM job priority (sets the SLURM QoS value). Only project leads can set high.", rich_help_panel=PANEL_SUBMISSION)] = None,
     dependency: Annotated[str | None, Option("--dependency", help="SLURM dependency expression for sbatch (e.g. 'afterok:12345' or 'singleton').", rich_help_panel=PANEL_SUBMISSION)] = None,
     test_only: Annotated[bool, Option("--test-only", help="Pass --test-only to sbatch to validate without submitting a job.", rich_help_panel=PANEL_SUBMISSION)] = False,
     dry_run: Annotated[bool, Option("--dry-run", help="Write configs and script, print the `sbatch` command, and do not submit.", rich_help_panel=PANEL_SUBMISSION)] = False,
@@ -298,7 +290,6 @@ def sft(
     if mail is not None and not mail_user:
         raise typer.BadParameter("--mail-user is required when --mail is set.", param_hint="--mail-user")
     mail_type = "begin,end" if mail == MailSetting.BEGIN_END else (mail.value if mail is not None else None)
-    resolved_priority = job_priority if job_priority is not None else (_QOS_PRIORITY[priority] if priority is not None else None)
     resolved_config_paths = [path.expanduser().resolve() for path in config_tomls]
     sft_config = _load_sft_config(
         resolved_config_paths,
@@ -319,7 +310,7 @@ def sft(
         job_name=job_name,
         gpus=gpus,
         cpus_per_gpu=cpus_per_gpu,
-        priority=resolved_priority,
+        priority=priority,
         mail_type=mail_type,
         mail_user=mail_user,
         slurm_resume=slurm_resume,
@@ -355,8 +346,7 @@ def rl(
     cpus_per_gpu: Annotated[int, Option("--cpus-per-gpu", min=1, max=32, help="Number of CPUs to allocate per GPU (sets SLURM --cpus-per-gpu).", rich_help_panel=PANEL_COMPUTE)] = 16,
     job_name: Annotated[str | None, Option("--job-name", help="SLURM job name. Defaults to '<config stem>-rl'.", rich_help_panel=PANEL_SUBMISSION)] = None,
     account: Annotated[Account, Option("--account", help="SLURM account to pass to sbatch.", rich_help_panel=PANEL_SUBMISSION)] = Account.TRAINING,
-    priority: Annotated[QoS | None, Option("--priority", help="SLURM job priority (sets the SLURM QoS value). Only project leads can set high priority, Overridden by --job-priority if both are set.", rich_help_panel=PANEL_SUBMISSION)] = None,
-    job_priority: Annotated[int | None, Option("--job-priority", help="Explicit numeric SLURM prioritylong value. Overrides --priority when set.", rich_help_panel=PANEL_SUBMISSION)] = None,
+    priority: Annotated[QoS | None, Option("--priority", help="SLURM job priority (sets the SLURM QoS value). Only project leads can set high.", rich_help_panel=PANEL_SUBMISSION)] = None,
     dependency: Annotated[str | None, Option("--dependency", help="SLURM dependency expression for sbatch (e.g. 'afterok:12345' or 'singleton').", rich_help_panel=PANEL_SUBMISSION)] = None,
     test_only: Annotated[bool, Option("--test-only", help="Pass --test-only to sbatch to validate without submitting a job.", rich_help_panel=PANEL_SUBMISSION)] = False,
     dry_run: Annotated[bool, Option("--dry-run", help="Write configs and script, print the `sbatch` command, and do not submit.", rich_help_panel=PANEL_SUBMISSION)] = False,
@@ -374,7 +364,6 @@ def rl(
     output_dir_override = output_dir.expanduser().resolve() if output_dir is not None else None
     project_dir = _resolve_path(source_dir, Path.cwd())
     hf_cache_dir = _default_hf_cache_dir(project_dir, hf_cache_dir)
-    resolved_priority = job_priority if job_priority is not None else (_QOS_PRIORITY[priority] if priority is not None else None)
     resolved_config_paths = [path.expanduser().resolve() for path in config_tomls]
     job_name = job_name or f"{resolved_config_paths[-1].stem}-rl"
     train_gpus = 1 if single_gpu else train_gpus
@@ -435,7 +424,7 @@ def rl(
         gpus=gpus,
         single_gpu=single_gpu,
         cpus_per_gpu=cpus_per_gpu,
-        priority=resolved_priority,
+        priority=priority,
         mail_type=mail_type,
         mail_user=mail_user,
         slurm_resume=slurm_resume,

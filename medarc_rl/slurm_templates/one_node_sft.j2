@@ -12,8 +12,8 @@
 {% if slurm_resume %}
 #SBATCH --requeue
 {% endif %}
-{% if priority is not none %}
-#SBATCH --priority={{ priority }}
+{% if qos %}
+#SBATCH --qos={{ qos }}
 {% endif %}
 {% if mail_type %}
 #SBATCH --mail-type={{ mail_type }}
