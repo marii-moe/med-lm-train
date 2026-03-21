@@ -66,7 +66,7 @@ decay_steps = 0
 
 [ckpt]
 interval = 100
-keep_last = 2
+keep_last = 1
 
 [inference]
 gpu_memory_utilization = 0.90
