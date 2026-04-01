@@ -92,6 +92,48 @@ You can pass PRIME-RL config overrides directly as extra flags (for example `--w
 Email mode is `--mail all` or `--mail begin_end` (with `--mail-user`).
 Use `--dependency "<expr>"` to pass SLURM dependencies and `--test-only` to run `sbatch` validation without submitting.
 
+### Job priority
+
+#### QoS (`--priority`)
+
+Use `--priority` to set the SLURM QoS for the job. QoS controls preemption: jobs at a higher QoS value can preempt jobs with a lower QoS value. The two tiers available to team members are:
+
+| Value | When to use |
+|-------|-------------|
+| _(default)_ | Normal scheduling; can preempt `low` jobs |
+| `low` | Background or exploratory runs; can be preempted by normal jobs |
+
+```bash
+# Normal priority (default)
+medarc_slurm sft --config config.toml --output-dir runs/my-sft --gpus 2
+
+# Low priority — can be preempted by normal-priority jobs
+medarc_slurm sft --config config.toml --output-dir runs/my-sft --gpus 2 --priority low
+```
+
+#### Fine-tuning with `--nice`
+
+Within a QoS tier, pass `--nice <value>` to further adjust scheduling order. Higher values yield more to other jobs at the same QoS level. While preemption is triggered by QoS, nice does influence it in two ways:
+
+- **Which jobs get preempted first:** when a higher-QoS job needs resources, SLURM preferentially preempts jobs with higher nice values.
+- **Requeue order after preemption:** preempted jobs are requeued, and those with higher nice values are scheduled later than those with lower nice values.
+
+```bash
+# Yield to other low-priority jobs in the queue
+medarc_slurm sft --config config.toml --output-dir runs/my-sft --gpus 2 --priority low --nice 100
+
+# Long sweep — deprioritize as much as possible within the low tier
+medarc_slurm rl --config config.toml --output-dir runs/my-rl --train-gpus 2 --infer-gpus 2 --priority low --nice 200
+```
+
+Suggested `--nice` values:
+
+| Value | When to use |
+|-------|-------------|
+| `0` (default) | No adjustment; scheduled normally within the QoS tier |
+| `100` | Yield to other jobs at the same QoS level |
+| `200` | Long-running sweeps or archival jobs that should rarely run ahead of others |
+
 Run `medarc_slurm sft --help` or `medarc_slurm rl --help` for more details on available options.
 
 ## Examples

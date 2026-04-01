@@ -445,7 +445,7 @@ def test_rl_renders_priority_mail_and_requeue_flags(tmp_path: Path) -> None:
 
 
 def test_rl_renders_nice_value(tmp_path: Path) -> None:
-    config_paths = _build_rl_inherited_config(tmp_path, cp=1, tp=1)
+    config_paths = _build_rl_inherited_config(tmp_path, cp=1)
     output_dir = tmp_path / "rl_out_nice"
 
     result = runner.invoke(
