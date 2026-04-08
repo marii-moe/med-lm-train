@@ -1,4 +1,4 @@
-max_steps = 1000
+max_steps = 200
 seq_len = 2048
 max_async_level = 1
 
@@ -30,16 +30,16 @@ temperature = 1.0
 id = "medarc/medqa"
 
 [[orchestrator.env]]
-id = "medarc/med_mcqa"
+id = "medarc/med-mcqa"
 
 [[orchestrator.env]]
 id = "medarc/pubmedqa"
 
 [[orchestrator.env]]
-id = "medarc/medcalc_bench"
+id = "medarc/medcalc-bench"
 
 [orchestrator.buffer]
-env_ratios = [0.18, 0.593, 0.071, 0.156]
+env_ratios = [1, 1, 1, 1] #[0.18, 0.593, 0.071, 0.156]
 online_difficulty_filtering = true
 easy_threshold = 0.8
 hard_threshold = 0.2
@@ -56,7 +56,7 @@ rollouts_per_example = 1
 [orchestrator.eval]
 interval = 100
 num_examples = 500
-rollouts_per_example = 1
+rollouts_per_example = 1 #maybe increase for less variance
 
 [orchestrator.eval.sampling]
 seed = 42
@@ -67,7 +67,7 @@ id = "medarc/medqa"
 num_examples = 635
 
 [[orchestrator.eval.env]]
-id = "medarc/med_mcqa"
+id = "medarc/med-mcqa"
 num_examples = 2090
 
 [[orchestrator.eval.env]]
@@ -75,10 +75,11 @@ id = "medarc/pubmedqa"
 num_examples = 250
 
 [[orchestrator.eval.env]]
-id = "medarc/medcalc_bench"
+id = "medarc/medcalc-bench"
 num_examples = 550
 
 [trainer.model.lora]
+alpha = 64 #maybe double?
 rank = 64 #based on results from notion. April 1 2026 
 
 [trainer.ckpt.weights]
