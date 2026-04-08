@@ -39,7 +39,7 @@ id = "pubmedqa"
 id = "medcalc_bench"
 
 [orchestrator.buffer]
-env_ratios = [1, 1, 1, 1, 1, 1, 1, 1]
+env_ratios = [0.18, 0.593, 0.071, 0.156]
 online_difficulty_filtering = true
 easy_threshold = 0.8
 hard_threshold = 0.2
@@ -53,28 +53,6 @@ interval = 10
 num_examples = 3525
 rollouts_per_example = 1
 
-[orchestrator.val.sampling]
-seed = 42
-temperature = 0.0 #um, what?!? this doesn't seem right
-
-[[orchestrator.val.env]]
-id = "medqa"
-
-[[orchestrator.val.env]]
-id = "med_mcqa"
-
-[[orchestrator.val.env]]
-id = "pubmedqa"
-
-[[orchestrator.val.env]]
-id = "medcalc_bench"
-
-[orchestrator.val.buffer]
-env_ratios = [0.18, 0.593, 0.071, 0.156]
-
-[orchestrator.val.env.args]
-judge_model = "nopeity_nope"
-
 [orchestrator.eval]
 interval = 100
 num_examples = 500
@@ -86,18 +64,19 @@ temperature = 0.0 #um, what?!? this doesn't seem right
 
 [[orchestrator.eval.env]]
 id = "medqa"
+num_examples = 635
 
 [[orchestrator.eval.env]]
 id = "med_mcqa"
+num_examples = 2090
 
 [[orchestrator.eval.env]]
 id = "pubmedqa"
+num_examples = 250
 
 [[orchestrator.eval.env]]
 id = "medcalc_bench"
-
-[orchestrator.eval.env.args]
-judge_model = "nopeity_nope"
+num_examples = 550
 
 [trainer.model.lora]
 rank = 64 #based on results from notion. April 1 2026 
