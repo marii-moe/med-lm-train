@@ -30,7 +30,7 @@ temperature = 1.0
 id = "medarc/medqa"
 
 [[orchestrator.env]]
-id = "medarc/med-mcqa"
+id = "medarc/med_mcqa"
 
 [[orchestrator.env]]
 id = "medarc/pubmedqa"
@@ -67,7 +67,7 @@ id = "medarc/medqa"
 num_examples = 635
 
 [[orchestrator.eval.env]]
-id = "medarc/med-mcqa"
+id = "medarc/med_mcqa"
 num_examples = 2090
 
 [[orchestrator.eval.env]]
