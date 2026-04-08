@@ -1,0 +1,106 @@
+max_steps = 200
+seq_len = 2048
+max_async_level = 1
+
+[deployment]
+type = "single_node"
+num_train_gpus = 2
+num_infer_gpus = 6
+
+[wandb]
+project = "baseline"
+name = "baseline"
+
+[model]
+name = "Qwen/Qwen3-4B-Instruct-2507"
+
+[orchestrator]
+batch_size = 512
+rollouts_per_example = 16
+max_concurrent = 96
+
+[orchestrator.model.lora]
+name = "baseline"
+
+[orchestrator.sampling]
+max_tokens = 1024
+temperature = 1.0
+
+[[orchestrator.env]]
+id = "medarc/medqa"
+
+[[orchestrator.env]]
+id = "medarc/med-mcqa"
+
+[[orchestrator.env]]
+id = "medarc/pubmedqa"
+
+[[orchestrator.env]]
+id = "medarc/medcalc-bench"
+
+[orchestrator.buffer]
+env_ratios = [1, 1, 1, 1] #[0.18, 0.593, 0.071, 0.156]
+online_difficulty_filtering = true
+easy_threshold = 0.8
+hard_threshold = 0.2
+easy_fraction = 0.0
+hard_fraction = 0.0
+
+[orchestrator.ckpt]
+
+[orchestrator.val]
+interval = 10
+num_examples = 3525
+rollouts_per_example = 1
+
+[orchestrator.eval]
+interval = 100
+num_examples = 500
+rollouts_per_example = 1 #maybe increase for less variance
+
+[orchestrator.eval.sampling]
+seed = 42
+temperature = 0.0 #um, what?!? this doesn't seem right
+
+[[orchestrator.eval.env]]
+id = "medarc/medqa"
+num_examples = 635
+
+[[orchestrator.eval.env]]
+id = "medarc/med-mcqa"
+num_examples = 2090
+
+[[orchestrator.eval.env]]
+id = "medarc/pubmedqa"
+num_examples = 250
+
+[[orchestrator.eval.env]]
+id = "medarc/medcalc-bench"
+num_examples = 550
+
+[trainer.model]
+impl = "auto"
+attn = "flash_attention_3"
+seq_len = 12288
+
+[trainer.model.lora]
+alpha = 64 #maybe double?
+rank = 64 #based on results from notion. April 1 2026 
+
+[trainer.ckpt.weights]
+save_adapter_separately = true #required for https://github.com/PrimeIntellect-ai/prime-rl/issues/1707
+
+[trainer.optim]
+lr = 1e-5
+max_norm = 0.01 #is this a good idea?
+
+[inference]
+enable_lora = true
+gpu_memory_utilization = 0.9
+
+[inference.parallel]
+tp = 1
+dp = 6
+
+[inference.model]
+max_model_len = 2048
