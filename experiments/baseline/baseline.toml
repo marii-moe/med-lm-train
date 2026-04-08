@@ -27,16 +27,16 @@ max_tokens = 1024
 temperature = 1.0
 
 [[orchestrator.env]]
-id = "medqa"
+id = "medarc/medqa"
 
 [[orchestrator.env]]
-id = "med_mcqa"
+id = "medarc/med_mcqa"
 
 [[orchestrator.env]]
-id = "pubmedqa"
+id = "medarc/pubmedqa"
 
 [[orchestrator.env]]
-id = "medcalc_bench"
+id = "medarc/medcalc_bench"
 
 [orchestrator.buffer]
 env_ratios = [0.18, 0.593, 0.071, 0.156]
@@ -63,19 +63,19 @@ seed = 42
 temperature = 0.0 #um, what?!? this doesn't seem right
 
 [[orchestrator.eval.env]]
-id = "medqa"
+id = "medarc/medqa"
 num_examples = 635
 
 [[orchestrator.eval.env]]
-id = "med_mcqa"
+id = "medarc/med_mcqa"
 num_examples = 2090
 
 [[orchestrator.eval.env]]
-id = "pubmedqa"
+id = "medarc/pubmedqa"
 num_examples = 250
 
 [[orchestrator.eval.env]]
-id = "medcalc_bench"
+id = "medarc/medcalc_bench"
 num_examples = 550
 
 [trainer.model.lora]
