@@ -36,6 +36,9 @@ export HF_HOME="$HF_CACHE_DIR"
 export MEDARC_SINGLE_GPU={{ 1 if single_gpu else 0 }}
 
 mkdir -p "$OUTPUT_DIR/slurm" "$OUTPUT_DIR/torchrun"
+mkdir -p "$HF_CACHE_DIR"
+chgrp hpcroot "$HF_CACHE_DIR"
+chmod g+s "$HF_CACHE_DIR"
 
 if [ -f "$PROJECT_DIR/.env" ]; then
   set -a
