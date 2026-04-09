@@ -34,10 +34,12 @@ export HF_CACHE_DIR="{{ hf_cache_dir }}"
 export HF_HUB_OFFLINE={{ 1 if hf_hub_offline else 0 }}
 export HF_HOME="$HF_CACHE_DIR"
 
+if ! id -Gn | grep -qw hpcroot; then
+  echo "ERROR: user is not a member of the hpcroot group" >&2
+  exit 1
+fi
+
 mkdir -p "$OUTPUT_DIR/slurm" "$OUTPUT_DIR/torchrun"
-mkdir -p "$HF_CACHE_DIR"
-chgrp hpcroot "$HF_CACHE_DIR"
-chmod g+s "$HF_CACHE_DIR"
 
 if [ -f "$PROJECT_DIR/.env" ]; then
   set -a
