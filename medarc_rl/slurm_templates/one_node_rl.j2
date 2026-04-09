@@ -43,6 +43,10 @@ if ! id -Gn | grep -qw hpcroot; then
   exit 1
 fi
 
+if [ "$(id -gn)" != "hpcroot" ]; then
+  exec sg hpcroot "$0" "$@"
+fi
+
 mkdir -p "$OUTPUT_DIR/slurm" "$OUTPUT_DIR/torchrun"
 
 if [ -f "$PROJECT_DIR/.env" ]; then
