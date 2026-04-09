@@ -50,12 +50,11 @@ hard_fraction = 0.0
 
 [orchestrator.val]
 interval = 10
-num_examples = 3525
+num_examples = 1410
 rollouts_per_example = 1
 
 [orchestrator.eval]
 interval = 100
-num_examples = 500
 rollouts_per_example = 1 #maybe increase for less variance
 
 [orchestrator.eval.sampling]
@@ -64,19 +63,15 @@ temperature = 0.0 #um, what?!? this doesn't seem right
 
 [[orchestrator.eval.env]]
 id = "medarc/medqa"
-num_examples = 635
 
 [[orchestrator.eval.env]]
 id = "medarc/med_mcqa"
-num_examples = 2090
 
 [[orchestrator.eval.env]]
 id = "medarc/pubmedqa"
-num_examples = 250
 
 [[orchestrator.eval.env]]
 id = "medarc/medcalc-bench"
-num_examples = 550
 
 [trainer.model]
 impl = "auto"
