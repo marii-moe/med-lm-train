@@ -34,13 +34,16 @@ export HF_CACHE_DIR="{{ hf_cache_dir }}"
 export HF_HUB_OFFLINE={{ 1 if hf_hub_offline else 0 }}
 export HF_HOME="$HF_CACHE_DIR"
 
-if ! id -Gn | grep -qw hpcroot; then
-  echo "ERROR: user is not a member of the hpcroot group" >&2
+_d="$HF_CACHE_DIR"; while [ ! -e "$_d" ]; do _d="$(dirname "$_d")"; done
+HF_CACHE_GROUP="$(stat -c '%G' "$_d")"; unset _d
+
+if ! id -Gn | grep -qw "$HF_CACHE_GROUP"; then
+  echo "ERROR: user is not a member of group $HF_CACHE_GROUP (required by $HF_CACHE_DIR)" >&2
   exit 1
 fi
 
-if [ "$(id -gn)" != "hpcroot" ]; then
-  exec sg hpcroot "$0" "$@"
+if [ "$(id -gn)" != "$HF_CACHE_GROUP" ]; then
+  exec sg "$HF_CACHE_GROUP" "$0" "$@"
 fi
 
 mkdir -p "$OUTPUT_DIR/slurm" "$OUTPUT_DIR/torchrun"
