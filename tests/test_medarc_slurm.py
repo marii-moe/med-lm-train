@@ -394,6 +394,21 @@ def test_rl_single_gpu_dry_run(tmp_path: Path) -> None:
     assert rl_cfg["deployment"]["num_infer_gpus"] == 1
 
 
+def test_sft_renders_nice_value(tmp_path: Path) -> None:
+    config_paths = _build_sft_inherited_config(tmp_path)
+    output_dir = tmp_path / "sft_out_nice"
+
+    result = runner.invoke(
+        app,
+        ["sft", *_cli_args(config_paths, "--output-dir", str(output_dir), "--gpus", "1", "--nice", "100", "--dry-run")],
+    )
+
+    assert result.exit_code == 0, result.output
+    script = (output_dir / "sft.sh").read_text(encoding="utf-8")
+    assert "#SBATCH --nice=100" in script
+    assert f"--nice=100 {output_dir / 'sft.sh'}" in result.output
+
+
 def test_rl_renders_priority_mail_and_requeue_flags(tmp_path: Path) -> None:
     config_paths = _build_rl_inherited_config(tmp_path, cp=1)
     output_dir = tmp_path / "rl_out_slurm_flags"
@@ -427,6 +442,21 @@ def test_rl_renders_priority_mail_and_requeue_flags(tmp_path: Path) -> None:
     assert "#SBATCH --mail-user=email@domain.com" in script
     assert "#SBATCH --requeue" in script
     assert config["ckpt"]["resume_step"] == -1
+
+
+def test_rl_renders_nice_value(tmp_path: Path) -> None:
+    config_paths = _build_rl_inherited_config(tmp_path, cp=1)
+    output_dir = tmp_path / "rl_out_nice"
+
+    result = runner.invoke(
+        app,
+        ["rl", *_cli_args(config_paths, "--output-dir", str(output_dir), "--nice", "50", "--dry-run")],
+    )
+
+    assert result.exit_code == 0, result.output
+    script = (output_dir / "rl.sh").read_text(encoding="utf-8")
+    assert "#SBATCH --nice=50" in script
+    assert f"--nice=50 {output_dir / 'rl.sh'}" in result.output
 
 
 def test_sft_cpus_per_gpu_default(tmp_path: Path) -> None:

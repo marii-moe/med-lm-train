@@ -115,6 +115,7 @@ def _submit_or_print(
     dry_run: bool,
     account: str | Account | None = None,
     dependency: str | None = None,
+    nice: int | None = None,
     test_only: bool = False,
     env: dict[str, str] | None = None,
 ) -> None:
@@ -132,6 +133,8 @@ def _submit_or_print(
         sbatch_cmd.extend(["--account", account])
     if dependency:
         sbatch_cmd.extend(["--dependency", dependency])
+    if nice is not None:
+        sbatch_cmd.append(f"--nice={nice}")
     if test_only:
         sbatch_cmd.append("--test-only")
     sbatch_cmd.append(str(script_path))
@@ -188,6 +191,7 @@ def _write_sft_outputs(
     gpus: int,
     cpus_per_gpu: int,
     priority: QoS | None,
+    nice: int | None,
     mail_type: str | None,
     mail_user: str | None,
     slurm_resume: bool,
@@ -205,6 +209,7 @@ def _write_sft_outputs(
         gpus=gpus,
         cpus_per_gpu=cpus_per_gpu,
         qos=priority.value if priority is not None else None,
+        nice=nice,
         mail_type=mail_type,
         mail_user=mail_user,
         slurm_resume=slurm_resume,
@@ -224,6 +229,7 @@ def _write_rl_outputs(
     single_gpu: bool,
     cpus_per_gpu: int,
     priority: QoS | None,
+    nice: int | None,
     mail_type: str | None,
     mail_user: str | None,
     slurm_resume: bool,
@@ -246,6 +252,7 @@ def _write_rl_outputs(
         single_gpu=single_gpu,
         cpus_per_gpu=cpus_per_gpu,
         qos=priority.value if priority is not None else None,
+        nice=nice,
         mail_type=mail_type,
         mail_user=mail_user,
         slurm_resume=slurm_resume,
@@ -268,6 +275,7 @@ def sft(
     job_name: Annotated[str | None, Option("--job-name", help="SLURM job name. Defaults to '<config stem>-sft'.", rich_help_panel=PANEL_SUBMISSION)] = None,
     account: Annotated[Account, Option("--account", help="SLURM account to pass to sbatch.", rich_help_panel=PANEL_SUBMISSION)] = Account.TRAINING,
     priority: Annotated[QoS | None, Option("--priority", help="SLURM job priority (sets the SLURM QoS value). Only project leads can set high.", rich_help_panel=PANEL_SUBMISSION)] = None,
+    nice: Annotated[int | None, Option("--nice", help="SLURM nice value passed to sbatch (positive = lower priority, negative = higher priority).", rich_help_panel=PANEL_SUBMISSION)] = None,
     dependency: Annotated[str | None, Option("--dependency", help="SLURM dependency expression for sbatch (e.g. 'afterok:12345' or 'singleton').", rich_help_panel=PANEL_SUBMISSION)] = None,
     test_only: Annotated[bool, Option("--test-only", help="Pass --test-only to sbatch to validate without submitting a job.", rich_help_panel=PANEL_SUBMISSION)] = False,
     dry_run: Annotated[bool, Option("--dry-run", help="Write configs and script, print the `sbatch` command, and do not submit.", rich_help_panel=PANEL_SUBMISSION)] = False,
@@ -311,6 +319,7 @@ def sft(
         gpus=gpus,
         cpus_per_gpu=cpus_per_gpu,
         priority=priority,
+        nice=nice,
         mail_type=mail_type,
         mail_user=mail_user,
         slurm_resume=slurm_resume,
@@ -323,6 +332,7 @@ def sft(
         dry_run=dry_run,
         account=account,
         dependency=dependency,
+        nice=nice,
         test_only=test_only,
         env=submit_env,
     )
@@ -347,6 +357,7 @@ def rl(
     job_name: Annotated[str | None, Option("--job-name", help="SLURM job name. Defaults to '<config stem>-rl'.", rich_help_panel=PANEL_SUBMISSION)] = None,
     account: Annotated[Account, Option("--account", help="SLURM account to pass to sbatch.", rich_help_panel=PANEL_SUBMISSION)] = Account.TRAINING,
     priority: Annotated[QoS | None, Option("--priority", help="SLURM job priority (sets the SLURM QoS value). Only project leads can set high.", rich_help_panel=PANEL_SUBMISSION)] = None,
+    nice: Annotated[int | None, Option("--nice", help="SLURM nice value passed to sbatch (positive = lower priority, negative = higher priority).", rich_help_panel=PANEL_SUBMISSION)] = None,
     dependency: Annotated[str | None, Option("--dependency", help="SLURM dependency expression for sbatch (e.g. 'afterok:12345' or 'singleton').", rich_help_panel=PANEL_SUBMISSION)] = None,
     test_only: Annotated[bool, Option("--test-only", help="Pass --test-only to sbatch to validate without submitting a job.", rich_help_panel=PANEL_SUBMISSION)] = False,
     dry_run: Annotated[bool, Option("--dry-run", help="Write configs and script, print the `sbatch` command, and do not submit.", rich_help_panel=PANEL_SUBMISSION)] = False,
@@ -425,6 +436,7 @@ def rl(
         single_gpu=single_gpu,
         cpus_per_gpu=cpus_per_gpu,
         priority=priority,
+        nice=nice,
         mail_type=mail_type,
         mail_user=mail_user,
         slurm_resume=slurm_resume,
@@ -437,6 +449,7 @@ def rl(
         dry_run=dry_run,
         account=account,
         dependency=dependency,
+        nice=nice,
         test_only=test_only,
         env=submit_env,
     )
