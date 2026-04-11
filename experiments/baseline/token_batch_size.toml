@@ -12,10 +12,10 @@ project = "baseline"
 name = "token_batch_size"
 
 [orchestrator.wandb]
-id=p9d2k6jt
+id = "p9d2k6jt"
 
 [trainer.wandb]
-id=w4o1r8ez
+id = "w4o1r8ez"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"

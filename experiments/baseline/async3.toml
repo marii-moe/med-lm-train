@@ -12,10 +12,10 @@ project = "baseline"
 name = "async3"
 
 [orchestrator.wandb]
-id=b4y9c6fh
+id = "b4y9c6fh"
 
 [trainer.wandb]
-id=z2s5j1dk
+id = "z2s5j1dk"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"

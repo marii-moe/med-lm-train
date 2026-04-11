@@ -12,10 +12,10 @@ project = "baseline"
 name = "model_seq_len"
 
 [orchestrator.wandb]
-id=g6t3a8lv
+id = "g6t3a8lv"
 
 [trainer.wandb]
-id=e0n4u7rp
+id = "e0n4u7rp"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
