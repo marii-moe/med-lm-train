@@ -11,6 +11,12 @@ num_infer_gpus = 6
 project = "baseline"
 name = "baseline"
 
+[orchestrator.wandb]
+id=fnw7fj5t
+
+[trainer.wandb]
+id=ip2w1vpd
+
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
 
