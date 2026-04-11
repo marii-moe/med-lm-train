@@ -79,6 +79,8 @@ id = "pubmedqa"
 [[orchestrator.eval.env]]
 id = "medcalc-bench"
 
+[trainer.model.compile]
+
 [trainer.model.lora]
 alpha = 64 #maybe double?
 rank = 64 #based on results from notion. April 1 2026 

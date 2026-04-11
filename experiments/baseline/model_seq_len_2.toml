@@ -84,6 +84,8 @@ impl = "auto"
 attn = "flash_attention_3"
 seq_len = 24576
 
+[trainer.model.compile]
+
 [trainer.model.lora]
 alpha = 64 #maybe double?
 rank = 64 #based on results from notion. April 1 2026 
