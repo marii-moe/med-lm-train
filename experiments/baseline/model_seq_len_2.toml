@@ -1,4 +1,4 @@
-max_steps = 100
+max_steps = 50
 seq_len = 2048
 max_async_level = 1
 
@@ -83,6 +83,9 @@ id = "medcalc-bench"
 impl = "auto"
 attn = "flash_attention_3"
 seq_len = 24576
+
+[trainer.model.ac]
+freq = 2   # every 2 layers; 1 = full AC (slowest but minimum memory)
 
 [trainer.model.compile]
 

@@ -1,6 +1,6 @@
 max_steps = 50
-seq_len = 2048
-max_async_level = 3
+seq_len = 2048 # 819.28 tokens per sequence
+max_async_level = 1
 
 [deployment]
 type = "single_node"
@@ -9,13 +9,13 @@ num_infer_gpus = 6
 
 [wandb]
 project = "baseline"
-name = "async3"
+name = "compile-full"
 
 [orchestrator.wandb]
-id = "b4y9c6fh"
+id = "cr08816b"
 
 [trainer.wandb]
-id = "z2s5j1dk"
+id = "4xztcq0g"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
@@ -26,7 +26,7 @@ rollouts_per_example = 16
 max_concurrent = 96
 
 [orchestrator.model.lora]
-name = "async3"
+name = "compile-full"
 
 [orchestrator.sampling]
 max_tokens = 1024
@@ -78,6 +78,9 @@ id = "pubmedqa"
 
 [[orchestrator.eval.env]]
 id = "medcalc-bench"
+
+[trainer.model.compile]
+fullgraph = true
 
 [trainer.model.lora]
 alpha = 64 #maybe double?
