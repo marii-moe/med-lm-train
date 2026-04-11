@@ -33,7 +33,7 @@ id = "medarc/medqa"
 id = "medarc/med_mcqa"
 
 [[orchestrator.env]]
-id = "medarc/pubmedqa"
+id = "pubmedqa"
 
 [[orchestrator.env]]
 id = "medarc/medcalc-bench"
@@ -68,7 +68,7 @@ id = "medarc/medqa"
 id = "medarc/med_mcqa"
 
 [[orchestrator.eval.env]]
-id = "medarc/pubmedqa"
+id = "pubmedqa"
 
 [[orchestrator.eval.env]]
 id = "medarc/medcalc-bench"
