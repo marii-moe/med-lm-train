@@ -1,4 +1,4 @@
-max_steps = 200
+max_steps = 100
 seq_len = 2048
 max_async_level = 1
 
@@ -9,19 +9,19 @@ num_infer_gpus = 6
 
 [wandb]
 project = "baseline"
-name = "baseline"
+name = "token_batch_size"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
 
 [orchestrator]
-token_batch_size = 1048576
+token_batch_size = 524288
 rollouts_per_example = 16
 max_inflight_rollouts = 512
 max_concurrent = 96
 
 [orchestrator.model.lora]
-name = "baseline"
+name = "token_batch_size"
 
 [orchestrator.sampling]
 max_tokens = 1024
@@ -34,10 +34,10 @@ id = "medarc/medqa"
 id = "medarc/med_mcqa"
 
 [[orchestrator.env]]
-id = "medarc/pubmedqa"
+id = "pubmedqa"
 
 [[orchestrator.env]]
-id = "medarc/medcalc-bench"
+id = "medcalc-bench"
 
 [orchestrator.buffer]
 env_ratios = [1, 1, 1, 1] #[0.18, 0.593, 0.071, 0.156]
@@ -50,12 +50,12 @@ hard_fraction = 0.0
 [orchestrator.ckpt]
 
 [orchestrator.val]
-interval = 10
+interval = 25
 num_examples = 1410
 rollouts_per_example = 1
 
 [orchestrator.eval]
-interval = 100
+interval = 50
 rollouts_per_example = 1 #maybe increase for less variance
 
 [orchestrator.eval.sampling]
@@ -69,10 +69,10 @@ id = "medarc/medqa"
 id = "medarc/med_mcqa"
 
 [[orchestrator.eval.env]]
-id = "medarc/pubmedqa"
+id = "pubmedqa"
 
 [[orchestrator.eval.env]]
-id = "medarc/medcalc-bench"
+id = "medcalc-bench"
 
 [trainer.model.lora]
 alpha = 64 #maybe double?

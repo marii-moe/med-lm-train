@@ -1,5 +1,5 @@
-max_steps = 200
-seq_len = 2048
+max_steps = 100
+seq_len = 2048 # 819.28 tokens per sequence
 max_async_level = 1
 
 [deployment]
@@ -49,12 +49,12 @@ hard_fraction = 0.0
 [orchestrator.ckpt]
 
 [orchestrator.val]
-interval = 10
+interval = 25
 num_examples = 1410
 rollouts_per_example = 1
 
 [orchestrator.eval]
-interval = 100
+interval = 50
 rollouts_per_example = 1 #maybe increase for less variance
 
 [orchestrator.eval.sampling]
