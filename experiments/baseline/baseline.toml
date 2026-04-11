@@ -36,7 +36,7 @@ id = "medarc/med_mcqa"
 id = "pubmedqa"
 
 [[orchestrator.env]]
-id = "medarc/medcalc-bench"
+id = "medcalc-bench"
 
 [orchestrator.buffer]
 env_ratios = [1, 1, 1, 1] #[0.18, 0.593, 0.071, 0.156]
@@ -71,7 +71,7 @@ id = "medarc/med_mcqa"
 id = "pubmedqa"
 
 [[orchestrator.eval.env]]
-id = "medarc/medcalc-bench"
+id = "medcalc-bench"
 
 [trainer.model.lora]
 alpha = 64 #maybe double?
