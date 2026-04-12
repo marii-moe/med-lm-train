@@ -92,6 +92,72 @@ You can pass PRIME-RL config overrides directly as extra flags (for example `--w
 Email mode is `--mail all` or `--mail begin_end` (with `--mail-user`).
 Use `--dependency "<expr>"` to pass SLURM dependencies and `--test-only` to run `sbatch` validation without submitting.
 
+### Job resumption
+
+When `--slurm-resume` is enabled, SLURM will automatically requeue preempted jobs. This sets PRIME-RL's `ckpt.resume_step=-1` which tells PRIME-RL to resume from the latest checkpoin.
+
+If not set, a preempted job will be canceled and will require manual resubmission.
+
+### Job priority
+
+#### Priority / QoS
+
+Use `--priority` to set the SLURM priority level (QoS) for the job. Priority controls preemption: jobs at a higher QoS value can preempt jobs with a lower QoS value. The two tiers are available to MedARC members:
+
+| Value    | When to use |
+|----------|-------------|
+| `normal` | Normal scheduling; can preempt `low` jobs. Default when unset. |
+| `low`    | Background or exploratory runs; can be preempted by normal jobs |
+
+```bash
+# Normal priority (default)
+medarc_slurm sft --config config.toml --output-dir runs/my-sft --gpus 2
+
+# Low priority — can be preempted by normal-priority jobs
+medarc_slurm sft --config config.toml --output-dir runs/my-sft --gpus 2 --priority low
+```
+
+#### Fine-tuning with `--nice`
+
+Within a QoS tier, pass `--nice <value>` to further adjust scheduling order. Higher values yield more to other jobs at the same QoS level. While preemption is triggered by QoS, nice does influence it in two ways:
+
+- **Which jobs get preempted first:** when a higher-QoS job needs resources, SLURM preferentially preempts jobs with higher nice values.
+- **Requeue order after preemption:** preempted jobs are requeued, and those with higher nice values are scheduled later than those with lower nice values.
+
+```bash
+# Yield to other low-priority jobs in the queue
+medarc_slurm sft --config config.toml --output-dir runs/my-sft --gpus 2 --priority low --nice 100
+
+# Long sweep — deprioritize as much as possible within the low tier and resume if preempted
+medarc_slurm rl --config config.toml --output-dir runs/my-rl --train-gpus 2 --infer-gpus 2 --priority low --nice 200 --slurm-resume
+```
+
+Suggested `--nice` values:
+
+| Value | When to use |
+|-------|-------------|
+| `0` (default) | No adjustment; scheduled normally within the QoS tier |
+| `100` | Yield to other jobs at the same QoS level |
+| `200` | Long-running sweeps or archival jobs that should rarely run ahead of others |
+
+#### Job resumption with `--slurm-resume`
+
+Pass `--slurm-resume` to automatically resume training from the latest checkpoint when a job is requeued (e.g. after preemption or node failure). This sets PRIME-RL's `ckpt.resume_step=-1`, which tells the trainer to discover and load the most recent checkpoint in the output directory.
+
+```bash
+# SFT with automatic checkpoint resumption
+medarc_slurm sft --config config.toml --output-dir runs/my-sft --gpus 2 --slurm-resume
+
+# RL with automatic checkpoint resumption
+medarc_slurm rl --config config.toml --output-dir runs/my-rl --train-gpus 2 --infer-gpus 2 --slurm-resume
+```
+
+For local training via `medarc_train`, the equivalent flag is `--resume`:
+
+```bash
+medarc_train sft --config config.toml --output-dir runs/my-sft --resume
+```
+
 Run `medarc_slurm sft --help` or `medarc_slurm rl --help` for more details on available options.
 
 ## Examples
