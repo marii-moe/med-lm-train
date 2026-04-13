@@ -91,6 +91,41 @@ def test_pubmedqa_training_shuffle_can_differ_from_eval_shuffle(monkeypatch) -> 
     assert "options" not in eval_row["info"]
 
 
+def test_pubmedqa_eval_remains_fixed_format_and_correctness_only(monkeypatch) -> None:
+    pubmedqa = _load_pubmedqa_module()
+
+    def fake_load_dataset(path: str, name: str, split: str):
+        assert path == "qiaojin/PubMedQA"
+        assert split == "train"
+        return _fake_pubmedqa_dataset(2 if name == "pqa_artificial" else 1, name)
+
+    monkeypatch.setattr(pubmedqa, "load_dataset", fake_load_dataset)
+    monkeypatch.setattr(pubmedqa.json, "load", lambda _: {"pqa_labeled-0"})
+
+    env = pubmedqa.load_environment(
+        use_think=False,
+        answer_format=AnswerFormat.XML,
+        train_answer_formats=[AnswerFormat.XML, AnswerFormat.JSON],
+        train_format_seed=3,
+    )
+    eval_row = env.get_eval_dataset()[0]
+
+    assert eval_row["info"]["answer_format"] == "xml"
+
+    state = {
+        "prompt": eval_row["prompt"],
+        "completion": [{"role": "assistant", "content": "<answer>A</answer>"}],
+        "answer": eval_row["answer"],
+        "task": eval_row["task"],
+        "info": eval_row["info"],
+        "timing": _timing_state(),
+    }
+    asyncio.run(env.rubric.score_rollout(state))
+
+    assert state["reward"] == 1.0
+    assert "format_reward" not in state["metrics"]
+
+
 def test_pubmedqa_group_scoring_and_task_routing(monkeypatch) -> None:
     pubmedqa = _load_pubmedqa_module()
 

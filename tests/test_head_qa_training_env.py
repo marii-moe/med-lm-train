@@ -89,6 +89,40 @@ def test_head_qa_training_shuffle_can_differ_from_eval_shuffle(monkeypatch) -> N
     assert "options" not in eval_row["info"]
 
 
+def test_head_qa_eval_remains_fixed_format_and_correctness_only(monkeypatch) -> None:
+    head_qa = _load_head_qa_module()
+
+    def fake_load_dataset(path: str, lang: str, split: str):
+        assert path == "EleutherAI/headqa"
+        assert lang == "en"
+        return _fake_head_qa_dataset(2 if split == "train" else 1, split)
+
+    monkeypatch.setattr(head_qa, "load_dataset", fake_load_dataset)
+
+    env = head_qa.load_environment(
+        use_think=False,
+        answer_format=AnswerFormat.XML,
+        train_answer_formats=[AnswerFormat.XML, AnswerFormat.JSON],
+        train_format_seed=3,
+    )
+    eval_row = env.get_eval_dataset()[0]
+
+    assert eval_row["info"]["answer_format"] == "xml"
+
+    state = {
+        "prompt": eval_row["prompt"],
+        "completion": [{"role": "assistant", "content": "<answer>1</answer>"}],
+        "answer": eval_row["answer"],
+        "task": eval_row["task"],
+        "info": eval_row["info"],
+        "timing": _timing_state(),
+    }
+    asyncio.run(env.rubric.score_rollout(state))
+
+    assert state["reward"] == 1.0
+    assert "format_reward" not in state["metrics"]
+
+
 def test_head_qa_group_scoring_and_task_routing(monkeypatch) -> None:
     head_qa = _load_head_qa_module()
 

@@ -29,6 +29,11 @@ from medarc_rl.verifiers import (
 )
 
 
+def _row_key(question_text: str, options: list[str], answer_idx: int) -> str:
+    ordered_options = "|".join(f"{idx + 1}:{option}" for idx, option in enumerate(options))
+    return f"{question_text}|{ordered_options}|{answer_idx}"
+
+
 def zero_shot_prompt(example: dict[str, Any]) -> dict[str, Any]:
     """Build the zero-shot prompt."""
     question_text = (example.get("qtext") or "").strip()
@@ -84,7 +89,7 @@ def load_environment(
 
         options = [answer["atext"].strip() for answer in answers]
         answer_idx = correct_answer - 1
-        row_format_key = str(example.get("id", idx) or question_text)
+        row_format_key = _row_key(question_text, options, answer_idx)
         should_shuffle_answers = training_shuffle_answers if dataset_split == "train" else shuffle_answers
         current_shuffle_seed = training_shuffle_seed if dataset_split == "train" else shuffle_seed
 

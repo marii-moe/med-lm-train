@@ -90,8 +90,8 @@ def test_medconceptsqa_sample_training_is_full_minus_sample_eval(monkeypatch) ->
     train_ids = {row["info"]["row_format_key"] for row in env.get_dataset()}
     eval_ids = {row["info"]["row_format_key"] for row in env.get_eval_dataset()}
 
-    assert train_ids == {f"full-train-{idx}" for idx in range(1, 10)}
-    assert eval_ids == {"sample-test-1", "sample-test-2"}
+    assert train_ids == {f"concept:full-train-{idx}" for idx in range(1, 10)}
+    assert eval_ids == {"concept:sample-test-1", "concept:sample-test-2"}
     assert train_ids.isdisjoint(eval_ids)
 
 
@@ -128,6 +128,65 @@ def test_medconceptsqa_few_shot_and_train_formats_follow_selected_format(monkeyp
     assert "<answer>A</answer>" in prompt_by_format["xml"]
     assert "\\boxed{A}" in prompt_by_format["boxed"]
     assert '{"answer":"A"}' in prompt_by_format["json"]
+
+
+def test_medconceptsqa_eval_remains_fixed_format_and_correctness_only(monkeypatch) -> None:
+    medconceptsqa = _load_medconceptsqa_module()
+
+    def fake_load_dataset(path: str, subset: str):
+        assert subset == "icd10cm_easy"
+        if path == "sameedkhan/medconceptsqa-sample_medarc_2k":
+            return _sample_dataset()
+        if path == "ofir408/MedConceptsQA":
+            return _full_dataset()
+        raise AssertionError(path)
+
+    monkeypatch.setattr(medconceptsqa, "load_dataset", fake_load_dataset)
+
+    env = medconceptsqa.load_environment(
+        vocab="icd10cm_sample",
+        use_think=False,
+        answer_format=AnswerFormat.XML,
+        train_answer_formats=[AnswerFormat.XML, AnswerFormat.JSON],
+        train_format_seed=3,
+    )
+    eval_row = env.get_eval_dataset()[0]
+
+    assert eval_row["info"]["answer_format"] == "xml"
+
+    state = {
+        "prompt": eval_row["prompt"],
+        "completion": [{"role": "assistant", "content": "<answer>A</answer>"}],
+        "answer": eval_row["answer"],
+        "task": eval_row["task"],
+        "info": eval_row["info"],
+        "timing": _timing_state(),
+    }
+    asyncio.run(env.rubric.score_rollout(state))
+
+    assert state["reward"] == 1.0
+    assert "format_reward" not in state["metrics"]
+
+
+def test_medconceptsqa_non_sample_does_not_train_on_eval_split(monkeypatch) -> None:
+    medconceptsqa = _load_medconceptsqa_module()
+
+    full_ds = _full_dataset()
+
+    def fake_load_dataset(path: str, subset: str):
+        assert path == "ofir408/MedConceptsQA"
+        assert subset == "icd10cm_easy"
+        return full_ds
+
+    monkeypatch.setattr(medconceptsqa, "load_dataset", fake_load_dataset)
+
+    env = medconceptsqa.load_environment(vocab="icd10cm", num_few_shot=0)
+    train_ids = {row["info"]["row_format_key"] for row in env.get_dataset()}
+    eval_ids = {row["info"]["row_format_key"] for row in env.get_eval_dataset()}
+
+    assert train_ids == {"concept:sample-test-1", "concept:sample-test-2"} | {f"concept:full-train-{idx}" for idx in range(1, 10)}
+    assert eval_ids == {"concept:full-dev-1", "concept:full-dev-2"}
+    assert train_ids.isdisjoint(eval_ids)
 
 
 def test_medconceptsqa_training_shuffle_and_group_scoring(monkeypatch) -> None:

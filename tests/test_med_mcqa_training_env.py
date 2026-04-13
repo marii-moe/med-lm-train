@@ -85,6 +85,39 @@ def test_med_mcqa_training_shuffle_can_differ_from_eval_shuffle(monkeypatch) -> 
     assert "options" not in eval_row["info"]
 
 
+def test_med_mcqa_eval_remains_fixed_format_and_correctness_only(monkeypatch) -> None:
+    med_mcqa = _load_med_mcqa_module()
+
+    def fake_load_dataset(name: str, split: str):
+        assert name == "lighteval/med_mcqa"
+        return _fake_split(split, 2 if split == "train" else 1)
+
+    monkeypatch.setattr(med_mcqa, "load_dataset", fake_load_dataset)
+
+    env = med_mcqa.load_environment(
+        use_think=False,
+        answer_format=AnswerFormat.XML,
+        train_answer_formats=[AnswerFormat.XML, AnswerFormat.JSON],
+        train_format_seed=3,
+    )
+    eval_row = env.get_eval_dataset()[0]
+
+    assert eval_row["info"]["answer_format"] == "xml"
+
+    state = {
+        "prompt": eval_row["prompt"],
+        "completion": [{"role": "assistant", "content": "<answer>A</answer>"}],
+        "answer": eval_row["answer"],
+        "task": eval_row["task"],
+        "info": eval_row["info"],
+        "timing": _timing_state(),
+    }
+    asyncio.run(env.rubric.score_rollout(state))
+
+    assert state["reward"] == 1.0
+    assert "format_reward" not in state["metrics"]
+
+
 def test_med_mcqa_group_scoring_and_task_routing(monkeypatch) -> None:
     med_mcqa = _load_med_mcqa_module()
 

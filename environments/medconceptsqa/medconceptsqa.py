@@ -145,7 +145,7 @@ def load_environment(
         train_few_shot_source = full_ds["dev"]
     else:
         ds = load_dataset("ofir408/MedConceptsQA", subset)
-        eval_source = ds["test"]
+        eval_source = ds["dev"]
         eval_few_shot_source = ds["dev"]
         train_source = ds["test"]
         train_few_shot_source = ds["dev"]
@@ -160,9 +160,10 @@ def load_environment(
         row_vocab = row["vocab"]
         row_level = row["level"]
         question_stem, options = _extract_question_and_options(row)
-        row_id = row.get("id") or row.get("concept_id") or idx or question_stem
+        row_key = _row_key(row)
+        row_id = row.get("id") or row.get("concept_id") or row_key
         answer = row["answer_id"]
-        row_format_key = str(row_id)
+        row_format_key = row_key
         should_shuffle_answers = training_shuffle_answers if dataset_split == "train" else shuffle_answers
         current_shuffle_seed = training_shuffle_seed if dataset_split == "train" else shuffle_seed
 

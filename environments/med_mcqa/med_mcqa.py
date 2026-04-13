@@ -46,6 +46,11 @@ disable_progress_bar()  # suppress datasets progress indicators
 LETTER_INDICES = ["A", "B", "C", "D"]
 
 
+def _row_key(question: str, options: list[str], answer_idx: int) -> str:
+    ordered_options = "|".join(f"{label}:{text}" for label, text in zip(LETTER_INDICES, options))
+    return f"{question}|{ordered_options}|{answer_idx}"
+
+
 def med_mcqa(line: dict[str, Any]) -> dict[str, Any]:
     """Build the standard MedMCQA multiple-choice question prompt."""
     query = f"Give a letter answer among A, B, C or D.\nQuestion: {line['question']}\n"
@@ -100,7 +105,7 @@ def load_environment(
 
         options = [choices[0], choices[1], choices[2], choices[3]]
         answer_idx = cop - 1
-        row_format_key = str(example.get("id", idx) or question)
+        row_format_key = _row_key(question, options, answer_idx)
         should_shuffle_answers = training_shuffle_answers if dataset_split == "train" else shuffle_answers
         current_shuffle_seed = training_shuffle_seed if dataset_split == "train" else shuffle_seed
 
