@@ -28,6 +28,9 @@ from medarc_verifiers.utils.randomize_multiple_choice import randomize_multiple_
 
 from medarc_rl.verifiers import (
     MetaParser,
+    TRAIN_MCQ,
+    TRAIN_ANSWER_KEY,
+    TrainingMcq,
     TrainingAnswerFormat,
     TrainEvalRoutingEnv,
     TrainEvalRoutingRubric,
@@ -69,16 +72,22 @@ def med_mcqa(line: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _format_training_question(training_mcq: TrainingMcq, presented_options: dict[str, str]) -> str:
+    query = f"Give a letter answer among A, B, C or D.\nQuestion: {training_mcq.question_data}\n"
+    query += "".join(f"{label}. {presented_options[label]}\n" for label in LETTER_INDICES)
+    query += "Answer:"
+    return query
+
+
 def load_environment(
     use_think: bool = False,
     system_prompt: str | None = None,
     shuffle_answers: bool = False,
     shuffle_seed: int | None = 1618,
     training_shuffle_answers: bool | None = None,
-    training_shuffle_seed: int | None = None,
+    training_seed: int | None = None,
     answer_format: AnswerFormat | str = AnswerFormat.XML,
     train_answer_formats: list[TrainingAnswerFormat | str] | TrainingAnswerFormat | str | None = None,
-    train_format_seed: int | None = None,
 ) -> vf.Environment:
     """
     Load the MedMCQA environment with train and validation splits.
@@ -91,7 +100,7 @@ def load_environment(
     training_formats = normalize_training_answer_formats(answer_format, train_answer_formats)
     meta_parser = MetaParser(use_think=use_think)
     training_shuffle_answers = shuffle_answers if training_shuffle_answers is None else training_shuffle_answers
-    training_shuffle_seed = shuffle_seed if training_shuffle_seed is None else training_shuffle_seed
+    training_seed = shuffle_seed if training_seed is None else training_seed
 
     def _map_example(example: dict[str, Any], idx: int | None = None, *, dataset_split: str) -> dict[str, Any] | None:
         cop = example.get("cop", -1)
@@ -106,15 +115,13 @@ def load_environment(
         options = [choices[0], choices[1], choices[2], choices[3]]
         answer_idx = cop - 1
         row_format_key = _row_key(question, options, answer_idx)
-        should_shuffle_answers = training_shuffle_answers if dataset_split == "train" else shuffle_answers
-        current_shuffle_seed = training_shuffle_seed if dataset_split == "train" else shuffle_seed
 
-        if should_shuffle_answers:
+        if dataset_split == "eval" and shuffle_answers:
             options, _, answer_idx = randomize_multiple_choice(
                 options=options,
                 answer_choice=answer_idx,
                 labels=LETTER_INDICES,
-                seed=current_shuffle_seed,
+                seed=shuffle_seed,
                 row_id=row_format_key,
             )
 
@@ -129,14 +136,14 @@ def load_environment(
         mapped = med_mcqa(line)
         info = {
             "answer_text": options[answer_idx],
-            **({"options": dict(zip(LETTER_INDICES, options))} if should_shuffle_answers else {}),
+            **({"options": dict(zip(LETTER_INDICES, options))} if dataset_split == "eval" and shuffle_answers else {}),
         }
 
         if dataset_split == "train":
             row_answer_format = choose_training_answer_format(
                 row_format_key=row_format_key,
                 train_answer_formats=training_formats,
-                train_format_seed=train_format_seed,
+                training_seed=training_seed,
             )
             mapped["prompt"] = [
                 {"role": "system", "content": get_system_prompt(row_answer_format, use_think=use_think)},
@@ -150,8 +157,16 @@ def load_environment(
             answer_format=row_answer_format,
             row_format_key=row_format_key,
             dataset_split=dataset_split,
-            train_format_seed=train_format_seed if dataset_split == "train" else None,
+            training_seed=training_seed if dataset_split == "train" else None,
         )
+        if dataset_split == "train":
+            mapped[TRAIN_MCQ] = TrainingMcq.from_list_choices(
+                question_data=question,
+                options=options,
+                answer_idx=answer_idx,
+                labels=LETTER_INDICES,
+            ).to_payload()
+            mapped[TRAIN_ANSWER_KEY] = training_shuffle_answers
         return mapped
 
     columns_to_remove = ["question", "opa", "opb", "opc", "opd", "cop"]
@@ -199,4 +214,6 @@ def load_environment(
         eval_env=eval_env,
         rubric=TrainEvalRoutingRubric(train_rubric=train_rubric, eval_rubric=eval_rubric),
         env_id="med_mcqa",
+        format_training_question=_format_training_question,
+        use_think=use_think,
     )

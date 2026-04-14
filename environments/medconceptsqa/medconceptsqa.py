@@ -9,6 +9,9 @@ from medarc_verifiers.utils.randomize_multiple_choice import randomize_multiple_
 
 from medarc_rl.verifiers import (
     MetaParser,
+    TRAIN_MCQ,
+    TRAIN_ANSWER_KEY,
+    TrainingMcq,
     TrainingAnswerFormat,
     TrainEvalRoutingEnv,
     TrainEvalRoutingRubric,
@@ -68,6 +71,17 @@ def _format_stem_with_options(question: str, options: dict[str, str]) -> str:
     return f"{question}\n{option_block}".strip()
 
 
+def _build_training_question(question_stem: str, options: dict[str, str], few_shot_prompt: str) -> str:
+    formatted_question = _format_stem_with_options(question_stem, options)
+    return (
+        "Answer A, B, C, D according to the answer to this multiple choice question.\n"
+        + few_shot_prompt
+        + ("\n" if few_shot_prompt else "")
+        + formatted_question
+        + "\nAnswer:"
+    )
+
+
 def _row_key(row: dict) -> str:
     concept_id = row.get("concept_id")
     if concept_id not in (None, ""):
@@ -99,7 +113,9 @@ def _create_few_shot_data(few_shot_set: Dataset, num_few_shot: int, answer_forma
 
         question_stem, options = _extract_question_and_options(row)
         formatted_question = _format_stem_with_options(question_stem, options)
-        prompt = f"{formatted_question}\nAnswer: {_render_answer(answer_format, row['answer_id'])}\n\n".replace("  ", "")
+        prompt = f"{formatted_question}\nAnswer: {_render_answer(answer_format, row['answer_id'])}\n\n".replace(
+            "  ", ""
+        )
         few_shot_examples[key].append(prompt)
 
     return {key: "".join(value) for key, value in few_shot_examples.items()}
@@ -111,6 +127,15 @@ def _subset_name(vocab: Vocab, level: Difficulty) -> str:
     return f"{vocab.value}_{level.value}"
 
 
+def _format_training_question(training_mcq: TrainingMcq, presented_options: dict[str, str]) -> str:
+    question_data = training_mcq.question_data
+    return _build_training_question(
+        question_data["question_stem"],
+        presented_options,
+        question_data.get("few_shot_prompt", ""),
+    )
+
+
 def load_environment(
     num_few_shot: int = 4,
     use_think: bool = False,
@@ -119,10 +144,9 @@ def load_environment(
     shuffle_answers: bool = False,
     shuffle_seed: int | None = 1618,
     training_shuffle_answers: bool | None = None,
-    training_shuffle_seed: int | None = None,
+    training_seed: int | None = None,
     answer_format: AnswerFormat | str = AnswerFormat.XML,
     train_answer_formats: list[TrainingAnswerFormat | str] | TrainingAnswerFormat | str | None = None,
-    train_format_seed: int | None = None,
 ) -> vf.Environment:
     """MedConceptsQA training/eval environment."""
     vocab = Vocab(vocab) if isinstance(vocab, str) else vocab
@@ -132,7 +156,7 @@ def load_environment(
     training_formats = normalize_training_answer_formats(answer_format, train_answer_formats)
     meta_parser = MetaParser(use_think=use_think)
     training_shuffle_answers = shuffle_answers if training_shuffle_answers is None else training_shuffle_answers
-    training_shuffle_seed = shuffle_seed if training_shuffle_seed is None else training_shuffle_seed
+    training_seed = shuffle_seed if training_seed is None else training_seed
 
     if vocab == Vocab.ICD10CM_SAMPLE:
         sample_subset = subset.replace("_sample", "")
@@ -150,11 +174,17 @@ def load_environment(
         train_source = ds["test"]
         train_few_shot_source = ds["dev"]
 
-    eval_few_shot_data = _create_few_shot_data(eval_few_shot_source, num_few_shot, eval_answer_format) if num_few_shot > 0 else {}
-    training_few_shot_data = {
-        format_value: _create_few_shot_data(train_few_shot_source, num_few_shot, format_value)
-        for format_value in training_formats
-    } if num_few_shot > 0 else {}
+    eval_few_shot_data = (
+        _create_few_shot_data(eval_few_shot_source, num_few_shot, eval_answer_format) if num_few_shot > 0 else {}
+    )
+    training_few_shot_data = (
+        {
+            format_value: _create_few_shot_data(train_few_shot_source, num_few_shot, format_value)
+            for format_value in training_formats
+        }
+        if num_few_shot > 0
+        else {}
+    )
 
     def _map(row: dict, idx: int | None = None, *, dataset_split: str) -> dict:
         row_vocab = row["vocab"]
@@ -164,14 +194,12 @@ def load_environment(
         row_id = row.get("id") or row.get("concept_id") or row_key
         answer = row["answer_id"]
         row_format_key = row_key
-        should_shuffle_answers = training_shuffle_answers if dataset_split == "train" else shuffle_answers
-        current_shuffle_seed = training_shuffle_seed if dataset_split == "train" else shuffle_seed
 
-        if should_shuffle_answers and answer in options:
+        if dataset_split == "eval" and shuffle_answers and answer in options:
             options, answer, _ = randomize_multiple_choice(
                 options=options,
                 answer_choice=answer,
-                seed=current_shuffle_seed,
+                seed=shuffle_seed,
                 row_id=row_id,
             )
 
@@ -179,25 +207,18 @@ def load_environment(
             row_answer_format = choose_training_answer_format(
                 row_format_key=row_format_key,
                 train_answer_formats=training_formats,
-                train_format_seed=train_format_seed,
+                training_seed=training_seed,
             )
             few_shot_prompt = training_few_shot_data.get(row_answer_format, {}).get((row_vocab, row_level), "")
         else:
             row_answer_format = eval_answer_format
             few_shot_prompt = eval_few_shot_data.get((row_vocab, row_level), "")
 
-        formatted_question = _format_stem_with_options(question_stem, options)
-        full_question = (
-            "Answer A, B, C, D according to the answer to this multiple choice question.\n"
-            + few_shot_prompt
-            + ("\n" if few_shot_prompt else "")
-            + formatted_question
-            + "\nAnswer:"
-        )
+        full_question = _build_training_question(question_stem, options, few_shot_prompt)
 
         info: dict[str, Any] = {
             "answer_text": options.get(answer, row.get("answer")),
-            **({"options": options} if should_shuffle_answers else {}),
+            **({"options": options} if dataset_split == "eval" and shuffle_answers else {}),
         }
         mapped = {
             "question": full_question,
@@ -207,7 +228,7 @@ def load_environment(
                 answer_format=row_answer_format,
                 row_format_key=row_format_key,
                 dataset_split=dataset_split,
-                train_format_seed=train_format_seed if dataset_split == "train" else None,
+                training_seed=training_seed if dataset_split == "train" else None,
             ),
         }
         if dataset_split == "train":
@@ -215,6 +236,12 @@ def load_environment(
                 {"role": "system", "content": get_system_prompt(row_answer_format, use_think=use_think)},
                 {"role": "user", "content": full_question},
             ]
+            mapped[TRAIN_MCQ] = TrainingMcq.from_dict_choices(
+                question_data={"question_stem": question_stem, "few_shot_prompt": few_shot_prompt},
+                options=options,
+                answer=answer,
+            ).to_payload()
+            mapped[TRAIN_ANSWER_KEY] = training_shuffle_answers
         return mapped
 
     train_mapped = train_source.map(
@@ -261,4 +288,6 @@ def load_environment(
         eval_env=eval_env,
         rubric=TrainEvalRoutingRubric(train_rubric=train_rubric, eval_rubric=eval_rubric),
         env_id="medconceptsqa",
+        format_training_question=_format_training_question,
+        use_think=use_think,
     )

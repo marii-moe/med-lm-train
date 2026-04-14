@@ -67,7 +67,7 @@ def choose_training_answer_format(
     *,
     row_format_key: str,
     train_answer_formats: Sequence[AnswerFormat],
-    train_format_seed: int | None,
+    training_seed: int | None,
 ) -> AnswerFormat:
     if not train_answer_formats:
         raise ValueError("train_answer_formats must not be empty")
@@ -75,10 +75,10 @@ def choose_training_answer_format(
     if len(train_answer_formats) == 1:
         return train_answer_formats[0]
 
-    if train_format_seed is None:
+    if training_seed is None:
         return random.choice(train_answer_formats)
 
-    rng = random.Random(f"{train_format_seed}:{row_format_key}")
+    rng = random.Random(f"{training_seed}:{row_format_key}")
     return rng.choice(train_answer_formats)
 
 
@@ -88,12 +88,12 @@ def add_answer_format_metadata(
     answer_format: AnswerFormat,
     row_format_key: str,
     dataset_split: str,
-    train_format_seed: int | None = None,
+    training_seed: int | None = None,
 ) -> dict[str, Any]:
     merged = dict(info or {})
     merged["answer_format"] = answer_format.value
     merged["row_format_key"] = row_format_key
     merged["dataset_split"] = dataset_split
-    if train_format_seed is not None:
-        merged["train_format_seed"] = train_format_seed
+    if training_seed is not None:
+        merged["training_seed"] = training_seed
     return merged

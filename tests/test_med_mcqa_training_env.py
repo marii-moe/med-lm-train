@@ -1,19 +1,18 @@
 import asyncio
+from copy import deepcopy
 import importlib.util
 import sys
-import time
 from pathlib import Path
 
 from datasets import Dataset
 from medarc_verifiers.prompts import AnswerFormat
+from medarc_rl.verifiers import TRAIN_MCQ, TRAIN_ANSWER_KEY
+
+from tests.training_env_test_utils import completion_for_format, present_row, timing_state
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MED_MCQA_PATH = REPO_ROOT / "environments" / "med_mcqa" / "med_mcqa.py"
-
-
-def _timing_state() -> dict:
-    return {"generation_ms": 0.0, "scoring_ms": 0.0, "total_ms": 0.0, "start_time": time.time()}
 
 
 def _load_med_mcqa_module():
@@ -55,7 +54,7 @@ def test_med_mcqa_training_dataset_supports_xml_boxed_and_json(monkeypatch) -> N
         use_think=True,
         answer_format=AnswerFormat.XML,
         train_answer_formats="random",
-        train_format_seed=11,
+        training_seed=11,
     )
     train_dataset = env.get_dataset()
     formats = {row["info"]["answer_format"] for row in train_dataset}
@@ -75,14 +74,33 @@ def test_med_mcqa_training_shuffle_can_differ_from_eval_shuffle(monkeypatch) -> 
     env = med_mcqa.load_environment(
         shuffle_answers=False,
         training_shuffle_answers=True,
-        training_shuffle_seed=23,
+        training_seed=23,
     )
 
     train_row = env.get_dataset()[0]
     eval_row = env.get_eval_dataset()[0]
 
-    assert "options" in train_row["info"]
+    assert TRAIN_MCQ in train_row
+    assert train_row[TRAIN_ANSWER_KEY] is True
+    assert "options" not in train_row["info"]
     assert "options" not in eval_row["info"]
+
+    original_prompt = deepcopy(train_row["prompt"])
+    original_answer = train_row["answer"]
+
+    state = present_row(env, train_row)
+
+    assert train_row["prompt"] == original_prompt
+    assert train_row["answer"] == original_answer
+    assert state["info"]["answer_format"] == train_row["info"]["answer_format"]
+    assert state["info"]["answer_text"] == state["info"]["options"][state["answer"]]
+    assert state["prompt"][0]["content"] == train_row["prompt"][0]["content"]
+
+    state["completion"] = completion_for_format(state["info"]["answer_format"], state["answer"])
+    state["timing"] = timing_state()
+    asyncio.run(env.rubric.score_rollout(state))
+
+    assert state["reward"] == 1.1
 
 
 def test_med_mcqa_eval_remains_fixed_format_and_correctness_only(monkeypatch) -> None:
@@ -98,7 +116,7 @@ def test_med_mcqa_eval_remains_fixed_format_and_correctness_only(monkeypatch) ->
         use_think=False,
         answer_format=AnswerFormat.XML,
         train_answer_formats=[AnswerFormat.XML, AnswerFormat.JSON],
-        train_format_seed=3,
+        training_seed=3,
     )
     eval_row = env.get_eval_dataset()[0]
 
@@ -110,7 +128,7 @@ def test_med_mcqa_eval_remains_fixed_format_and_correctness_only(monkeypatch) ->
         "answer": eval_row["answer"],
         "task": eval_row["task"],
         "info": eval_row["info"],
-        "timing": _timing_state(),
+        "timing": timing_state(),
     }
     asyncio.run(env.rubric.score_rollout(state))
 
@@ -131,7 +149,7 @@ def test_med_mcqa_group_scoring_and_task_routing(monkeypatch) -> None:
         use_think=True,
         answer_format=AnswerFormat.XML,
         train_answer_formats=[AnswerFormat.XML, AnswerFormat.BOXED, AnswerFormat.JSON],
-        train_format_seed=5,
+        training_seed=5,
     )
 
     completions = {
@@ -153,7 +171,7 @@ def test_med_mcqa_group_scoring_and_task_routing(monkeypatch) -> None:
                 "answer": row["answer"],
                 "task": row["task"],
                 "info": row["info"],
-                "timing": _timing_state(),
+                "timing": timing_state(),
                 "trajectory": [],
             }
         )

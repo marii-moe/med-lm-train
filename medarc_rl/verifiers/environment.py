@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 import verifiers as vf
+
+from .presentation import TrainingMcq, apply_train_answer_reshuffle
 
 
 class TrainEvalRoutingRubric(vf.Rubric):
@@ -64,9 +66,15 @@ class TrainEvalRoutingEnv(vf.SingleTurnEnv):
         rubric: vf.Rubric | None = None,
         env_id: str | None = None,
         env_args: dict[str, Any] | None = None,
+        split_field: str = "dataset_split",
+        use_think: bool = False,
+        format_training_question: Callable[[TrainingMcq, dict[str, str]], str] | None = None,
     ) -> None:
         self.train_env = train_env
         self.eval_env = eval_env
+        self.split_field = split_field
+        self.use_think = use_think
+        self.format_training_question = format_training_question
         resolved_parser = parser
         if rubric is not None:
             resolved_parser = rubric.parser
@@ -92,6 +100,20 @@ class TrainEvalRoutingEnv(vf.SingleTurnEnv):
         if dataset is None:
             raise ValueError(error_message)
         return dataset
+
+    def _select_env_for_state(self, state: dict[str, Any]) -> vf.Environment:
+        info = state.get("info") or {}
+        if isinstance(info, dict) and info.get(self.split_field) == "eval":
+            return self.eval_env
+        return self.train_env
+
+    async def setup_state(self, state):
+        state = apply_train_answer_reshuffle(
+            state,
+            format_training_question=self.format_training_question,
+            use_think=self.use_think,
+        )
+        return await self._select_env_for_state(state).setup_state(state)
 
     def get_env_for_task(self, task_name: str) -> vf.Environment:
         valid_names = {

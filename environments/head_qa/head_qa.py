@@ -15,6 +15,9 @@ from medarc_verifiers.utils.randomize_multiple_choice import randomize_multiple_
 
 from medarc_rl.verifiers import (
     MetaParser,
+    TRAIN_MCQ,
+    TRAIN_ANSWER_KEY,
+    TrainingMcq,
     TrainingAnswerFormat,
     TrainEvalRoutingEnv,
     TrainEvalRoutingRubric,
@@ -56,16 +59,24 @@ def zero_shot_prompt(example: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _format_training_question(training_mcq: TrainingMcq, presented_options: dict[str, str]) -> str:
+    options_text = "\n".join(f"{label}. {presented_options[label]}" for label in training_mcq.labels)
+    return (
+        "You are an expert in specialized scientific and health disciplines. "
+        "Respond to the following multiple-choice question:\n"
+        f"{training_mcq.question_data}\n{options_text}\n"
+    )
+
+
 def load_environment(
     use_think: bool = False,
     system_prompt: str | None = None,
     shuffle_answers: bool = False,
     shuffle_seed: int | None = 1618,
     training_shuffle_answers: bool | None = None,
-    training_shuffle_seed: int | None = None,
+    training_seed: int | None = None,
     answer_format: AnswerFormat | str = AnswerFormat.XML,
     train_answer_formats: list[TrainingAnswerFormat | str] | TrainingAnswerFormat | str | None = None,
-    train_format_seed: int | None = None,
 ) -> vf.Environment:
     """
     Load the HEAD-QA environment with train and validation splits.
@@ -77,7 +88,7 @@ def load_environment(
     training_formats = normalize_training_answer_formats(answer_format, train_answer_formats)
     meta_parser = MetaParser(use_think=use_think)
     training_shuffle_answers = shuffle_answers if training_shuffle_answers is None else training_shuffle_answers
-    training_shuffle_seed = shuffle_seed if training_shuffle_seed is None else training_shuffle_seed
+    training_seed = shuffle_seed if training_seed is None else training_seed
 
     def _map_example(example: dict[str, Any], idx: int | None = None, *, dataset_split: str) -> dict[str, Any] | None:
         correct_answer = example.get("ra", -1)
@@ -90,16 +101,14 @@ def load_environment(
         options = [answer["atext"].strip() for answer in answers]
         answer_idx = correct_answer - 1
         row_format_key = _row_key(question_text, options, answer_idx)
-        should_shuffle_answers = training_shuffle_answers if dataset_split == "train" else shuffle_answers
-        current_shuffle_seed = training_shuffle_seed if dataset_split == "train" else shuffle_seed
 
-        if should_shuffle_answers:
+        if dataset_split == "eval" and shuffle_answers:
             indices = [str(i + 1) for i in range(len(options))]
             options, _, answer_idx = randomize_multiple_choice(
                 options=options,
                 answer_choice=answer_idx,
                 labels=indices,
-                seed=current_shuffle_seed,
+                seed=shuffle_seed,
                 row_id=row_format_key,
             )
 
@@ -114,7 +123,7 @@ def load_environment(
             row_answer_format = choose_training_answer_format(
                 row_format_key=row_format_key,
                 train_answer_formats=training_formats,
-                train_format_seed=train_format_seed,
+                training_seed=training_seed,
             )
             mapped["prompt"] = [
                 {"role": "system", "content": get_system_prompt(row_answer_format, use_think=use_think)},
@@ -126,13 +135,25 @@ def load_environment(
         mapped["info"] = add_answer_format_metadata(
             {
                 **mapped["info"],
-                **({"options": {str(i + 1): option for i, option in enumerate(options)}} if should_shuffle_answers else {}),
+                **(
+                    {"options": {str(i + 1): option for i, option in enumerate(options)}}
+                    if dataset_split == "eval" and shuffle_answers
+                    else {}
+                ),
             },
             answer_format=row_answer_format,
             row_format_key=row_format_key,
             dataset_split=dataset_split,
-            train_format_seed=train_format_seed if dataset_split == "train" else None,
+            training_seed=training_seed if dataset_split == "train" else None,
         )
+        if dataset_split == "train":
+            mapped[TRAIN_MCQ] = TrainingMcq.from_list_choices(
+                question_data=question_text,
+                options=options,
+                answer_idx=answer_idx,
+                labels=[str(idx + 1) for idx in range(len(options))],
+            ).to_payload()
+            mapped[TRAIN_ANSWER_KEY] = training_shuffle_answers
         return mapped
 
     columns_to_remove = ["qtext", "answers", "ra"]
@@ -180,4 +201,6 @@ def load_environment(
         eval_env=eval_env,
         rubric=TrainEvalRoutingRubric(train_rubric=train_rubric, eval_rubric=eval_rubric),
         env_id="head_qa",
+        format_training_question=_format_training_question,
+        use_think=use_think,
     )

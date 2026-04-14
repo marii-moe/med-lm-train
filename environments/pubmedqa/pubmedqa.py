@@ -9,6 +9,9 @@ from medarc_verifiers.utils.randomize_multiple_choice import randomize_multiple_
 
 from medarc_rl.verifiers import (
     MetaParser,
+    TRAIN_MCQ,
+    TRAIN_ANSWER_KEY,
+    TrainingMcq,
     TrainingAnswerFormat,
     TrainEvalRoutingEnv,
     TrainEvalRoutingRubric,
@@ -88,15 +91,28 @@ def map_row_to_mcq_prompt(
     }
 
 
+def _format_training_question(training_mcq: TrainingMcq, presented_options: dict[str, str]) -> str:
+    question_data = training_mcq.question_data
+    formatted_contexts = [
+        f"{label}. {text}" for label, text in zip(question_data["context_labels"], question_data["context_texts"])
+    ]
+    options_block = "\n".join(f"{letter}. {text}" for letter, text in presented_options.items())
+    question = PROMPT_TEMPLATE.format(
+        abstract_as_context="\n".join(formatted_contexts),
+        question=question_data["question"],
+        options_block=options_block,
+    )
+    return question
+
+
 def load_environment(
     use_think: bool = False,
     shuffle_answers: bool = False,
     shuffle_seed: int | None = 1618,
     training_shuffle_answers: bool | None = None,
-    training_shuffle_seed: int | None = None,
+    training_seed: int | None = None,
     answer_format: AnswerFormat | str = AnswerFormat.XML,
     train_answer_formats: list[TrainingAnswerFormat | str] | TrainingAnswerFormat | str | None = None,
-    train_format_seed: int | None = None,
 ) -> vf.Environment:
     """
     PubMedQA environment using classification-based evaluation.
@@ -117,16 +133,14 @@ def load_environment(
     training_formats = normalize_training_answer_formats(answer_format, train_answer_formats)
     meta_parser = MetaParser(use_think=use_think)
     training_shuffle_answers = shuffle_answers if training_shuffle_answers is None else training_shuffle_answers
-    training_shuffle_seed = shuffle_seed if training_shuffle_seed is None else training_shuffle_seed
+    training_seed = shuffle_seed if training_seed is None else training_seed
 
     def _map_row(row: dict, idx: int | None = None, *, dataset_split: str) -> dict:
-        should_shuffle_answers = training_shuffle_answers if dataset_split == "train" else shuffle_answers
-        current_shuffle_seed = training_shuffle_seed if dataset_split == "train" else shuffle_seed
         mapped = map_row_to_mcq_prompt(
             row,
             idx,
-            shuffle_answers=should_shuffle_answers,
-            shuffle_seed=current_shuffle_seed,
+            shuffle_answers=dataset_split == "eval" and shuffle_answers,
+            shuffle_seed=shuffle_seed,
         )
         row_format_key = str(row.get("pubid", idx))
 
@@ -134,7 +148,7 @@ def load_environment(
             row_answer_format = choose_training_answer_format(
                 row_format_key=row_format_key,
                 train_answer_formats=training_formats,
-                train_format_seed=train_format_seed,
+                training_seed=training_seed,
             )
             mapped["prompt"] = [
                 {"role": "system", "content": get_system_prompt(row_answer_format, use_think=use_think)},
@@ -148,8 +162,20 @@ def load_environment(
             answer_format=row_answer_format,
             row_format_key=row_format_key,
             dataset_split=dataset_split,
-            train_format_seed=train_format_seed if dataset_split == "train" else None,
+            training_seed=training_seed if dataset_split == "train" else None,
         )
+        if dataset_split == "train":
+            context_dict = row.get("context") or {}
+            mapped[TRAIN_MCQ] = TrainingMcq.from_dict_choices(
+                question_data={
+                    "question": row.get("question"),
+                    "context_labels": list(context_dict.get("labels") or []),
+                    "context_texts": list(context_dict.get("contexts") or []),
+                },
+                options=dict(BASE_OPTIONS),
+                answer=mapped["answer"],
+            ).to_payload()
+            mapped[TRAIN_ANSWER_KEY] = training_shuffle_answers
         return mapped
 
     mapped_dataset_train = dataset_train.map(
@@ -196,4 +222,6 @@ def load_environment(
         eval_env=eval_env,
         rubric=TrainEvalRoutingRubric(train_rubric=train_rubric, eval_rubric=eval_rubric),
         env_id="pubmedqa",
+        format_training_question=_format_training_question,
+        use_think=use_think,
     )

@@ -1,19 +1,18 @@
 import asyncio
+from copy import deepcopy
 import importlib.util
 import sys
-import time
 from pathlib import Path
 
 from datasets import Dataset, DatasetDict
 from medarc_verifiers.prompts import AnswerFormat
+from medarc_rl.verifiers import TRAIN_MCQ, TRAIN_ANSWER_KEY
+
+from tests.training_env_test_utils import completion_for_format, present_row, timing_state
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MEDCONCEPTSQA_PATH = REPO_ROOT / "environments" / "medconceptsqa" / "medconceptsqa.py"
-
-
-def _timing_state() -> dict:
-    return {"generation_ms": 0.0, "scoring_ms": 0.0, "total_ms": 0.0, "start_time": time.time()}
 
 
 def _load_medconceptsqa_module():
@@ -44,14 +43,18 @@ def _make_row(concept_id: str, stem: str) -> dict:
 def _sample_dataset() -> DatasetDict:
     return DatasetDict(
         {
-            "dev": Dataset.from_list([
-                _make_row("sample-dev-1", "Sample dev 1?"),
-                _make_row("sample-dev-2", "Sample dev 2?"),
-            ]),
-            "test": Dataset.from_list([
-                _make_row("sample-test-1", "Sample test 1?"),
-                _make_row("sample-test-2", "Sample test 2?"),
-            ]),
+            "dev": Dataset.from_list(
+                [
+                    _make_row("sample-dev-1", "Sample dev 1?"),
+                    _make_row("sample-dev-2", "Sample dev 2?"),
+                ]
+            ),
+            "test": Dataset.from_list(
+                [
+                    _make_row("sample-test-1", "Sample test 1?"),
+                    _make_row("sample-test-2", "Sample test 2?"),
+                ]
+            ),
         }
     )
 
@@ -59,10 +62,12 @@ def _sample_dataset() -> DatasetDict:
 def _full_dataset() -> DatasetDict:
     return DatasetDict(
         {
-            "dev": Dataset.from_list([
-                _make_row("full-dev-1", "Full dev 1?"),
-                _make_row("full-dev-2", "Full dev 2?"),
-            ]),
+            "dev": Dataset.from_list(
+                [
+                    _make_row("full-dev-1", "Full dev 1?"),
+                    _make_row("full-dev-2", "Full dev 2?"),
+                ]
+            ),
             "test": Dataset.from_list(
                 [_make_row("sample-test-1", "Sample test 1?"), _make_row("sample-test-2", "Sample test 2?")]
                 + [_make_row(f"full-train-{idx}", f"Full train {idx}?") for idx in range(1, 10)]
@@ -114,7 +119,7 @@ def test_medconceptsqa_few_shot_and_train_formats_follow_selected_format(monkeyp
         use_think=True,
         answer_format=AnswerFormat.XML,
         train_answer_formats="random",
-        train_format_seed=11,
+        training_seed=11,
     )
     train_dataset = env.get_dataset()
     formats = {row["info"]["answer_format"] for row in train_dataset}
@@ -148,7 +153,7 @@ def test_medconceptsqa_eval_remains_fixed_format_and_correctness_only(monkeypatc
         use_think=False,
         answer_format=AnswerFormat.XML,
         train_answer_formats=[AnswerFormat.XML, AnswerFormat.JSON],
-        train_format_seed=3,
+        training_seed=3,
     )
     eval_row = env.get_eval_dataset()[0]
 
@@ -160,7 +165,7 @@ def test_medconceptsqa_eval_remains_fixed_format_and_correctness_only(monkeypatc
         "answer": eval_row["answer"],
         "task": eval_row["task"],
         "info": eval_row["info"],
-        "timing": _timing_state(),
+        "timing": timing_state(),
     }
     asyncio.run(env.rubric.score_rollout(state))
 
@@ -184,7 +189,9 @@ def test_medconceptsqa_non_sample_does_not_train_on_eval_split(monkeypatch) -> N
     train_ids = {row["info"]["row_format_key"] for row in env.get_dataset()}
     eval_ids = {row["info"]["row_format_key"] for row in env.get_eval_dataset()}
 
-    assert train_ids == {"concept:sample-test-1", "concept:sample-test-2"} | {f"concept:full-train-{idx}" for idx in range(1, 10)}
+    assert train_ids == {"concept:sample-test-1", "concept:sample-test-2"} | {
+        f"concept:full-train-{idx}" for idx in range(1, 10)
+    }
     assert eval_ids == {"concept:full-dev-1", "concept:full-dev-2"}
     assert train_ids.isdisjoint(eval_ids)
 
@@ -208,16 +215,37 @@ def test_medconceptsqa_training_shuffle_and_group_scoring(monkeypatch) -> None:
         use_think=True,
         shuffle_answers=False,
         training_shuffle_answers=True,
-        training_shuffle_seed=23,
         answer_format=AnswerFormat.XML,
         train_answer_formats=[AnswerFormat.XML, AnswerFormat.BOXED, AnswerFormat.JSON],
-        train_format_seed=5,
+        training_seed=5,
     )
 
     train_row = env.get_dataset()[0]
     eval_row = env.get_eval_dataset()[0]
-    assert "options" in train_row["info"]
+    assert TRAIN_MCQ in train_row
+    assert train_row[TRAIN_ANSWER_KEY] is True
+    assert "options" not in train_row["info"]
     assert "options" not in eval_row["info"]
+
+    original_prompt = deepcopy(train_row["prompt"])
+    original_answer = train_row["answer"]
+
+    presented_state = present_row(env, train_row)
+
+    assert train_row["prompt"] == original_prompt
+    assert train_row["answer"] == original_answer
+    assert presented_state["info"]["answer_format"] == train_row["info"]["answer_format"]
+    assert presented_state["info"]["answer_text"] == presented_state["info"]["options"][presented_state["answer"]]
+    assert presented_state["prompt"][0]["content"] == train_row["prompt"][0]["content"]
+
+    presented_state["completion"] = completion_for_format(
+        presented_state["info"]["answer_format"],
+        presented_state["answer"],
+    )
+    presented_state["timing"] = timing_state()
+    asyncio.run(env.rubric.score_rollout(presented_state))
+
+    assert presented_state["reward"] == 1.1
 
     states = []
     seen = set()
@@ -238,7 +266,7 @@ def test_medconceptsqa_training_shuffle_and_group_scoring(monkeypatch) -> None:
                 "answer": answer,
                 "task": row["task"],
                 "info": row["info"],
-                "timing": _timing_state(),
+                "timing": timing_state(),
                 "trajectory": [],
             }
         )
