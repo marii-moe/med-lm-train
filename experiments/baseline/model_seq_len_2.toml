@@ -27,16 +27,22 @@ max_tokens = 1024
 temperature = 1.0
 
 [[orchestrator.env]]
-id = "medarc/medqa"
+id = "medqa"
+name = "medqa"
+args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 [[orchestrator.env]]
-id = "medarc/med_mcqa"
+id = "med_mcqa"
+name = "med_mcqa"
+args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 [[orchestrator.env]]
 id = "pubmedqa"
+name = "pubmedqa"
+args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
-[[orchestrator.env]]
-id = "medcalc-bench"
+#[[orchestrator.env]] not available at time. 
+#id = "medcalc-bench"
 
 [orchestrator.buffer]
 env_ratios = [1, 1, 1, 1] #[0.18, 0.593, 0.071, 0.156]
@@ -62,16 +68,13 @@ seed = 42
 temperature = 0.0 #um, what?!? this doesn't seem right
 
 [[orchestrator.eval.env]]
-id = "medarc/medqa"
+id = "medqa"
 
 [[orchestrator.eval.env]]
-id = "medarc/med_mcqa"
+id = "med_mcqa"
 
 [[orchestrator.eval.env]]
 id = "pubmedqa"
-
-[[orchestrator.eval.env]]
-id = "medcalc-bench"
 
 [trainer.model]
 impl = "auto"
