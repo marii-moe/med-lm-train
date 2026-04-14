@@ -29,6 +29,22 @@ Configure model and sampling:
 medarc-eval medqa -m "openai/gpt-5-mini" -n 5 -s --answer-format boxed
 ```
 
+## PRIME-RL Example
+Use this under your PRIME-RL config's `[[orchestrator.env]]` section.
+
+```toml
+[[orchestrator.env]]
+id = "medqa"
+name = "medqa"
+args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
+```
+
+## Training Behavior
+- `training_shuffle_answers = true` enables rollout-time answer-order reshuffling for train rows only.
+- The stored training dataset remains in stable order; the presented answer order may change across repeated RL presentations of the same row.
+- Eval rows remain fixed unless `shuffle_answers = true` is explicitly set for eval formatting.
+- `training_seed` controls training answer-format routing. Rollout-time train reshuffling itself is stochastic.
+
 ## Authors
 This environment has been put together by:
 
