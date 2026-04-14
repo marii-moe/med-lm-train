@@ -45,7 +45,7 @@ args = { use_think = true, train_answer_formats = "random", training_shuffle_ans
 #id = "medcalc-bench"
 
 [orchestrator.buffer]
-env_ratios = [1, 1, 1, 1] #[0.18, 0.593, 0.071, 0.156]
+env_ratios = [1, 1, 1] #, 1 [0.18, 0.593, 0.071, 0.156]
 online_difficulty_filtering = true
 easy_threshold = 0.8
 hard_threshold = 0.2
