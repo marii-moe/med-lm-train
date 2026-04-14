@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -51,8 +52,10 @@ class TrainingMcq:
             return value
         if not isinstance(value, dict):
             raise TypeError("TRAIN_MCQ payload must be a TrainingMcq or dict")
+        raw_qd = value["question_data"]
+        question_data = json.loads(raw_qd) if isinstance(raw_qd, str) else raw_qd
         return cls(
-            question_data=value["question_data"],
+            question_data=question_data,
             options=tuple(value["options"]),
             labels=tuple(value["labels"]),
             answer_idx=value["answer_idx"],
@@ -60,7 +63,7 @@ class TrainingMcq:
 
     def to_payload(self) -> dict[str, Any]:
         return {
-            "question_data": self.question_data,
+            "question_data": json.dumps(self.question_data),
             "options": list(self.options),
             "labels": list(self.labels),
             "answer_idx": self.answer_idx,
