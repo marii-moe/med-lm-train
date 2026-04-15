@@ -9,7 +9,7 @@ num_infer_gpus = 6
 
 [wandb]
 project = "baseline"
-name = "model_seq_len_2"
+name = "model_seq_len_9216"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
@@ -20,7 +20,7 @@ rollouts_per_example = 16
 max_concurrent = 96
 
 [orchestrator.model.lora]
-name = "model_seq_len_2"
+name = "model_seq_len_9216"
 
 [orchestrator.sampling]
 max_tokens = 1024
@@ -95,8 +95,12 @@ rank = 64 #based on results from notion. April 1 2026
 save_adapter_separately = true #required for https://github.com/PrimeIntellect-ai/prime-rl/issues/1707
 
 [trainer.optim]
-lr = 1e-5
+lr = 1e-6
 max_norm = 0.01 #is this a good idea?
+
+[ckpt]
+interval = 50
+keep_last = 1
 
 [inference]
 enable_lora = true
