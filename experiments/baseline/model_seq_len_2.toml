@@ -82,7 +82,8 @@ attn = "flash_attention_3"
 seq_len = 10192 # ~max with ac freq 2
 
 [trainer.model.ac]
-freq = 2   # every 2 layers; 1 = full AC (slowest but minimum memory)
+mode = "selective"
+targets = ["norm", "attn_proj"]
 
 [trainer.model.compile]
 
