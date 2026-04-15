@@ -11,12 +11,6 @@ num_infer_gpus = 6
 project = "baseline"
 name = "baseline"
 
-[orchestrator.wandb]
-id = "fnw7fj5t"
-
-[trainer.wandb]
-id = "ip2w1vpd"
-
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
 
@@ -33,26 +27,30 @@ max_tokens = 1024
 temperature = 1.0
 
 [[orchestrator.env]]
-id = "medarc/medqa"
+id = "medqa"
+name = "medqa"
+args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 [[orchestrator.env]]
-id = "medarc/med_mcqa"
+id = "med_mcqa"
+name = "med_mcqa"
+args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 [[orchestrator.env]]
 id = "pubmedqa"
+name = "pubmedqa"
+args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
-[[orchestrator.env]]
-id = "medcalc-bench"
+#[[orchestrator.env]] not available at time.
+#id = "medcalc-bench"
 
 [orchestrator.buffer]
-env_ratios = [1, 1, 1, 1] #[0.18, 0.593, 0.071, 0.156]
+env_ratios = [1, 1, 1]
 online_difficulty_filtering = true
 easy_threshold = 0.8
 hard_threshold = 0.2
 easy_fraction = 0.0
 hard_fraction = 0.0
-
-[orchestrator.ckpt]
 
 [orchestrator.val]
 interval = 25
@@ -60,35 +58,39 @@ num_examples = 1410
 rollouts_per_example = 1
 
 [orchestrator.eval]
-interval = 50
-rollouts_per_example = 1 #maybe increase for less variance
+interval = 25
+rollouts_per_example = 1
 
 [orchestrator.eval.sampling]
 seed = 42
-temperature = 0.0 #um, what?!? this doesn't seem right
+temperature = 0.0
 
 [[orchestrator.eval.env]]
-id = "medarc/medqa"
+id = "medqa"
 
 [[orchestrator.eval.env]]
-id = "medarc/med_mcqa"
+id = "med_mcqa"
 
 [[orchestrator.eval.env]]
 id = "pubmedqa"
 
-[[orchestrator.eval.env]]
-id = "medcalc-bench"
+[trainer.model]
+impl = "auto"
+attn = "flash_attention_3"
+seq_len = 2048
+
+[trainer.model.compile]
 
 [trainer.model.lora]
-alpha = 64 #maybe double?
-rank = 64 #based on results from notion. April 1 2026 
+alpha = 64
+rank = 64
 
 [trainer.ckpt.weights]
 save_adapter_separately = true #required for https://github.com/PrimeIntellect-ai/prime-rl/issues/1707
 
 [trainer.optim]
-lr = 1e-5
-max_norm = 0.01 #is this a good idea?
+lr = 1e-6
+max_norm = 0.01
 
 [inference]
 enable_lora = true
@@ -100,3 +102,7 @@ dp = 6
 
 [inference.model]
 max_model_len = 2048
+
+[ckpt]
+interval = 50
+keep_last = 1
