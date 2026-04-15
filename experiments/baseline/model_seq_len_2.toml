@@ -79,11 +79,11 @@ id = "pubmedqa"
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
-seq_len = 10192 # ~max with ac freq 2
+seq_len = 8192 # ~max with ac freq 2
 
 [trainer.model.ac]
-mode = "selective"
-targets = ["norm", "attn_proj"]
+mode = "full"
+freq = 2
 
 [trainer.model.compile]
 
