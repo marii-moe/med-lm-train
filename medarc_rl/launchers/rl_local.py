@@ -257,6 +257,7 @@ def rl_local(config: RLConfig) -> None:
                     "CUDA_VISIBLE_DEVICES": ",".join(trainer_gpu_ids),
                     "PYTHONUNBUFFERED": "1",
                     "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+                    "NCCL_DEBUG": "INFO",
                     "WANDB_PROGRAM": "medarc_rl.launchers.rl_local",
                     "WANDB_ARGS": json.dumps(start_command),
                 },
