@@ -160,6 +160,106 @@ medarc_train sft --config config.toml --output-dir runs/my-sft --resume
 
 Run `medarc_slurm sft --help` or `medarc_slurm rl --help` for more details on available options.
 
+## medarc_sweep
+
+`medarc_sweep` runs W&B hyperparameter sweeps locally using `medarc_train` as the per-trial executor. Each trial is a full `medarc_train rl` run with parameters drawn from the sweep, writing artifacts to an isolated subdirectory named after its W&B run ID.
+
+### Sweep config
+
+Create a standard W&B sweep YAML defining your search space and strategy. Parameter names use PRIME-RL's dotted notation directly — no `command:` section is needed, since `medarc_sweep` handles dispatch:
+
+```yaml
+# sweep.yaml
+method: bayes
+metric:
+  goal: maximize
+  name: reward/mean
+parameters:
+  trainer.optim.lr:
+    distribution: log_uniform_values
+    min: 1.0e-6
+    max: 1.0e-4
+  orchestrator.batch_size:
+    values: [64, 128, 256]
+```
+
+### Usage
+
+```bash
+# Create a new sweep and run 1 trial
+medarc_sweep rl \
+  --sweep-config sweep.yaml \
+  --config config.toml \
+  --output-dir runs/my-sweep \
+  --train-gpus 2 \
+  --infer-gpus 2
+
+# Run 3 trials sequentially on this agent
+medarc_sweep rl \
+  --sweep-config sweep.yaml \
+  --config config.toml \
+  --output-dir runs/my-sweep \
+  --train-gpus 2 \
+  --infer-gpus 2 \
+  --count 3
+
+# Join an existing sweep (e.g. to add a parallel agent on another machine)
+medarc_sweep rl \
+  --sweep-id <sweep-id> \
+  --config config.toml \
+  --output-dir runs/my-sweep \
+  --train-gpus 2 \
+  --infer-gpus 2
+
+# Single-GPU sweep
+medarc_sweep rl \
+  --sweep-config sweep.yaml \
+  --config config.toml \
+  --output-dir runs/my-sweep \
+  --single-gpu
+```
+
+To layer multiple base configs, repeat `--config` with later files overriding earlier ones — same as `medarc_train`. Fixed overrides that should apply to every trial can be passed after `--`:
+
+```bash
+medarc_sweep rl \
+  --sweep-config sweep.yaml \
+  --config base.toml \
+  --output-dir runs/my-sweep \
+  --train-gpus 2 \
+  --infer-gpus 2 \
+  -- --wandb.project my-project --wandb.group my-sweep-group
+```
+
+### Output layout
+
+Each trial writes to its own subdirectory under `--output-dir`:
+
+```
+runs/my-sweep/
+  abc1def2/          # W&B run ID
+    configs/         # resolved TOML subconfigs
+    logs/
+    torchrun/
+  gh3ijk45/
+    ...
+```
+
+### Running parallel agents
+
+To run multiple agents in parallel, launch `medarc_sweep rl --sweep-id <id>` in separate terminals (or SLURM jobs). Each agent calls `wandb agent --count N` independently and pulls the next parameter set from the W&B controller.
+
+```bash
+# Terminal 1 — creates the sweep
+medarc_sweep rl --sweep-config sweep.yaml --config config.toml \
+  --output-dir runs/my-sweep --train-gpus 2 --infer-gpus 2
+# prints: Created sweep: <sweep-id>
+
+# Terminal 2 — joins the same sweep
+medarc_sweep rl --sweep-id <sweep-id> --config config.toml \
+  --output-dir runs/my-sweep --train-gpus 2 --infer-gpus 2
+```
+
 ## Examples
 
 Each example has its own README with setup instructions, SFT/RL commands, and eval steps:

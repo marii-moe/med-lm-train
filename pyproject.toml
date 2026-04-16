@@ -24,6 +24,7 @@ flash-attn-4 =  ["prime-rl[flash-attn]", "flash_attn_3", "flash-attn-4>=4.0.0b4"
 
 [project.scripts]
 medarc_slurm = "medarc_rl.medarc_slurm:app"
+medarc_sweep = "medarc_rl.medarc_sweep:app"
 medarc_train = "medarc_rl.medarc_train:app"
 
 [build-system]
