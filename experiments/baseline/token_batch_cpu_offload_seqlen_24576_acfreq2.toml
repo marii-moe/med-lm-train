@@ -87,7 +87,7 @@ freq = 2
 
 [trainer.model.ac_offloading]
 pin_memory = true
-max_inflight_activations = 5
+max_inflight_activations = 20
 
 [trainer.model.compile]
 
