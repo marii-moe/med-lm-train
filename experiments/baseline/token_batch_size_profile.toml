@@ -9,7 +9,7 @@ num_infer_gpus = 6
 
 [wandb]
 project = "baseline"
-name = "token_batch_size"
+name = "token_batch_size-profile"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
@@ -21,7 +21,7 @@ max_inflight_rollouts = 512
 max_concurrent = 96
 
 [orchestrator.model.lora]
-name = "token_batch_size"
+name = "token_batch_size-profile"
 
 [orchestrator.sampling]
 max_tokens = 1024
@@ -52,24 +52,6 @@ easy_threshold = 0.8
 hard_threshold = 0.2
 easy_fraction = 0.0
 hard_fraction = 0.0
-
-[orchestrator.eval]
-interval = 25
-rollouts_per_example = 1
-eval = null #temporarily disable evals
-
-[orchestrator.eval.sampling]
-seed = 42
-temperature = 0.0
-
-[[orchestrator.eval.env]]
-id = "medqa"
-
-[[orchestrator.eval.env]]
-id = "med_mcqa"
-
-[[orchestrator.eval.env]]
-id = "pubmedqa"
 
 [trainer.model]
 impl = "auto"
