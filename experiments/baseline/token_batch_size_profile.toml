@@ -85,7 +85,3 @@ dp = 6
 
 [inference.model]
 max_model_len = 2048
-
-[ckpt]
-interval = 50
-keep_last = 1

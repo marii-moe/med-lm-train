@@ -50,7 +50,7 @@ if [ "$(id -gn)" != "$HF_CACHE_GROUP" ]; then
   exec sg "$HF_CACHE_GROUP" "$0" "$@"
 fi
 
-mkdir -p "$OUTPUT_DIR/slurm" "$OUTPUT_DIR/torchrun" "$OUTPUT_DIR/nsight"
+mkdir -p "$OUTPUT_DIR/slurm" "$OUTPUT_DIR/torchrun"
 
 if [ -f "$PROJECT_DIR/.env" ]; then
   set -a
@@ -65,8 +65,4 @@ export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=1
 
-nsys profile \
-    --output="$OUTPUT_DIR/nsight/profile_${SLURM_JOB_ID}" \
-    --trace=cuda,nvtx,cudnn,cublas \
-    --force-overwrite=true \
-    python -m medarc_rl.launchers.rl_local @ "$CONFIG_DIR/rl.toml"
+python -m medarc_rl.launchers.rl_local @ "$CONFIG_DIR/rl.toml"
