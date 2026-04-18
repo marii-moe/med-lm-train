@@ -227,15 +227,7 @@ def rl_local(config: RLConfig) -> None:
         monitor_thread.start()
         monitor_threads.append(monitor_thread)
 
-        nsight_dir = config.output_dir / "nsight"
-        nsight_dir.mkdir(parents=True, exist_ok=True)
-
         trainer_cmd = [
-            "nsys",
-            "profile",
-            f"--output={nsight_dir / f'trainer_{slurm_job_id}'}",
-            "--trace=cuda,nvtx,cudnn,cublas",
-            "--force-overwrite=true",
             "torchrun",
             f"--rdzv-endpoint=localhost:{rdzv_port}",
             f"--rdzv-id={uuid.uuid4().hex}",
