@@ -68,8 +68,8 @@ freq = 2
 alpha = 64
 rank = 64
 
-[trainer.ckpt.weights]
-save_adapter_separately = true #required for https://github.com/PrimeIntellect-ai/prime-rl/issues/1707
+#[trainer.ckpt.weights]
+#save_adapter_separately = true #required for https://github.com/PrimeIntellect-ai/prime-rl/issues/1707
 
 [trainer.optim]
 lr = 1e-6
@@ -85,3 +85,4 @@ dp = 6
 
 [inference.model]
 max_model_len = 2048
+
