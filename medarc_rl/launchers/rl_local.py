@@ -237,7 +237,7 @@ def rl_local(config: RLConfig) -> None:
             "--tee=3",
             f"--nproc-per-node={len(trainer_gpu_ids)}",
             "-m",
-            "prime_rl.trainer.rl.train",
+            "medarc_rl.profiling.rl_train",
             "@",
             (runtime_config_dir / "trainer.toml").as_posix(),
         ]
