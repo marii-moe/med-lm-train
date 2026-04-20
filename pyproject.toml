@@ -11,7 +11,10 @@ dependencies = [
     "typer>=0.24.1",
     "verifiers>=0.1.12.dev1",
     "wandb==0.25.1",
-    "vllm>=0.17,<0.18"
+    "vllm>=0.17,<0.18",
+    "medqa",
+    "med-mcqa",
+    "pubmedqa",
 ]
 
 [project.optional-dependencies]
@@ -37,6 +40,9 @@ module-root = ""
 
 [tool.uv.sources]
 prime-rl = { path = "prime-rl", editable = true }
+medqa = { path = "environments/medqa" }
+med-mcqa = { path = "environments/med_mcqa" }
+pubmedqa = { path = "environments/pubmedqa" }
 torch = { index = "pytorch-cu128" }
 transformers = { git = "https://github.com/huggingface/transformers.git", rev = "5c1c72b" }
 flash_attn_3 = { index = "flash-attn-3-cu128-torch2100" }
