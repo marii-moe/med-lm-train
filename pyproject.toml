@@ -56,7 +56,6 @@ explicit = true
 dev = [
     "pytest>=9.0.2",
     "ruff>=0.15.2",
-    "line-profiler>=4.0",
 ]
 
 [tool.uv]
