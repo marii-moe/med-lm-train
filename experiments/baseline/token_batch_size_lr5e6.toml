@@ -55,7 +55,7 @@ hard_fraction = 0.0
 
 [orchestrator.val]
 interval = 50
-num_examples = 1410
+num_examples = 512
 rollouts_per_example = 8
 
 [orchestrator.eval]
