@@ -303,6 +303,8 @@ def train(config: TrainerConfig):
 
         forward_backward_start_time = time.perf_counter()
         h2d_transfer_time = 0.0
+        forward_time = 0.0
+        backward_time = 0.0
         seq_len = micro_batches[0]["input_ids"].shape[1]
 
         # Normalize by the local number of unmasked tokens in the batch (per-batch length normalization)
@@ -381,6 +383,7 @@ def train(config: TrainerConfig):
                 temperatures = shard_for_cp(temperatures, cp_rank=cp_rank, cp_world_size=cp_size)
 
             # Forward pass with per-token temperatures
+            _forward_start = time.perf_counter()
             with maybe_record_function("forward"), maybe_activation_offloading(config.model.ac_offloading):
                 out = forward(
                     model,
@@ -392,6 +395,7 @@ def train(config: TrainerConfig):
                     image_grid_thw=image_grid_thw,
                     routed_experts=routed_experts,
                 )
+            forward_time += time.perf_counter() - _forward_start
 
             if out.get("logprobs") is None:
                 # VanillaOutputLinear was used - need to compute logprobs externally with per-token temps
@@ -435,8 +439,10 @@ def train(config: TrainerConfig):
             )
 
             # Backward pass
+            _backward_start = time.perf_counter()
             with maybe_record_function("backward"):
                 loss.backward()
+            backward_time += time.perf_counter() - _backward_start
 
             # Add relevant tensors to tensor dict for logging purposes
             tensors["trainer_probs"].append(torch.exp(out["logprobs"])[loss_mask].detach().to("cpu"))
@@ -550,6 +556,8 @@ def train(config: TrainerConfig):
             "time/broadcast_weights": broadcast_weights_time,
             "time/save_ckpt": save_ckpt_time,
             "time/forward_backward": forward_backward_time,
+            "time/forward": forward_time,
+            "time/backward": backward_time,
             "time/h2d_transfer": h2d_transfer_time,
             "step": progress.step,
         }
