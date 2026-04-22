@@ -10,7 +10,6 @@ num_infer_gpus = 6
 [wandb]
 project = "Baseline"
 name = "train_weight_test_small"
-entity = "medarc-med-lm"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
