@@ -30,17 +30,17 @@ temperature = 1.0
 [[orchestrator.env]]
 id = "medqa"
 name = "medqa"
-args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
+args = { train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 [[orchestrator.env]]
 id = "med_mcqa"
 name = "med_mcqa"
-args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
+args = { train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 [[orchestrator.env]]
 id = "pubmedqa"
 name = "pubmedqa"
-args = { use_think = true, train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
+args = { train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 #[[orchestrator.env]] not available at time.
 #id = "medcalc-bench"
