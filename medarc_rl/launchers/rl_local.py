@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import stat
 import sys
 import time
 import uuid
@@ -136,10 +137,16 @@ def rl_local(config: RLConfig) -> None:
     else:
         cache_root = Path("/tmp/medarc") / slurm_job_id
 
-    print(f"Using cache root: {cache_root}")
-    print("Using tmp directory:", slurm_tmpdir)
-    print("Using job id:", slurm_job_id)
-    
+    logger.info(f"SLURM_JOB_ID={slurm_job_id} SLURM_TMPDIR={slurm_tmpdir!r} cache_root={cache_root}")
+    parent = cache_root.parent
+    if parent.exists():
+        st = parent.stat()
+        logger.info(
+            f"cache_root parent {parent}: mode={stat.filemode(st.st_mode)} uid={st.st_uid} gid={st.st_gid} (process uid={os.getuid()} gid={os.getgid()})"
+        )
+    else:
+        logger.warning(f"cache_root parent {parent} does not exist")
+
     cache_root.mkdir(parents=True, exist_ok=True)
 
     base_env = os.environ.copy()
