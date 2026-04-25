@@ -53,9 +53,9 @@ class TrainingMcq:
         if not isinstance(value, dict):
             raise TypeError("TRAIN_MCQ payload must be a TrainingMcq or dict")
         raw_qd = value["question_data"]
-        question_data = json.loads(raw_qd) if isinstance(raw_qd, str) else raw_qd
+
         return cls(
-            question_data=question_data,
+            question_data=json.loads(raw_qd) if isinstance(raw_qd, str) else raw_qd,
             options=tuple(value["options"]),
             labels=tuple(value["labels"]),
             answer_idx=value["answer_idx"],

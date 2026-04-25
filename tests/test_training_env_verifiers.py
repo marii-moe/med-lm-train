@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+from datasets import Dataset
 from medarc_verifiers.prompts import AnswerFormat
 import medarc_rl.verifiers.presentation as presentation
 from medarc_rl.verifiers import (
@@ -145,6 +146,25 @@ def test_TRAIN_MCQ_from_list_choices_sets_labels_and_answer_idx() -> None:
     assert TRAIN_MCQ.labels == ("A", "B", "C", "D")
     assert TRAIN_MCQ.options == ("Alpha", "Bravo", "Charlie", "Delta")
     assert TRAIN_MCQ.answer_idx == 1
+
+
+def test_training_mcq_payload_normalizes_question_data_schema_for_mixed_rows() -> None:
+    text_payload = TrainingMcq.from_dict_choices(
+        question_data="Base question?",
+        options={"A": "Alpha", "B": "Bravo"},
+        answer="A",
+    ).to_payload()
+    dict_payload = TrainingMcq.from_dict_choices(
+        question_data={"question": "Base question?", "context": ["ctx"]},
+        options={"A": "Alpha", "B": "Bravo"},
+        answer="A",
+    ).to_payload()
+
+    dataset = Dataset.from_list([{TRAIN_MCQ: text_payload}, {TRAIN_MCQ: dict_payload}])
+
+    assert dataset.features[TRAIN_MCQ]["question_data"].dtype == "string"
+    assert TrainingMcq.from_value(text_payload).question_data == "Base question?"
+    assert TrainingMcq.from_value(dict_payload).question_data == {"question": "Base question?", "context": ["ctx"]}
 
 
 def test_apply_train_answer_reshuffle_updates_answer_alignment(monkeypatch) -> None:
