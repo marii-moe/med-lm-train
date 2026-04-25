@@ -135,6 +135,11 @@ def rl_local(config: RLConfig) -> None:
         cache_root = Path(slurm_tmpdir) / f"medarc_rl_launcher_{slurm_job_id}_{uuid.uuid4().hex[:8]}"
     else:
         cache_root = Path("/tmp/medarc") / slurm_job_id
+
+    print(f"Using cache root: {cache_root}")
+    print("Using tmp directory:", slurm_tmpdir)
+    print("Using job id:", slurm_job_id)
+    
     cache_root.mkdir(parents=True, exist_ok=True)
 
     base_env = os.environ.copy()
