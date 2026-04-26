@@ -110,8 +110,8 @@ enable_lora = true
 gpu_memory_utilization = 0.9
 
 [inference.parallel]
-tp = 1
-dp = 6
+tp = 2 #maybe qwen35 needs extra infer memory? +
+dp = 4
 
 [inference.model]
 max_model_len = 2048
