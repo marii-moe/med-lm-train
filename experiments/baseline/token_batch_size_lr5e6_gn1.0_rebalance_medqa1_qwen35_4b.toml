@@ -81,6 +81,7 @@ id = "pubmedqa"
 impl = "auto"
 attn = "flash_attention_3"
 seq_len = 9216
+optimization_dtype = "bfloat16"
 
 [trainer.model.ac]
 mode = "full"
