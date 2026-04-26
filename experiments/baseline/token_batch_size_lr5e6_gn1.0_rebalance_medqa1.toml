@@ -46,7 +46,7 @@ args = { train_answer_formats = "random", training_shuffle_answers = true, train
 #id = "medcalc-bench"
 
 [orchestrator.buffer]
-env_ratios = [1, 2, ]
+env_ratios = [1, 2, 2]
 online_difficulty_filtering = true
 easy_threshold = 0.8
 hard_threshold = 0.2
