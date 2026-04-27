@@ -114,15 +114,15 @@ def test_sft_multi_gpu(mock_run: MagicMock, tmp_path: Path) -> None:
     assert call_args[1]["env"]["CUDA_VISIBLE_DEVICES"] == "0,1,2,3"
 
 
-@patch("medarc_rl.launchers.rl_local.rl_local")
-def test_rl_single_gpu(mock_rl_local: MagicMock, tmp_path: Path, monkeypatch) -> None:
+@patch("medarc_rl.launchers.rl_local.rl")
+def test_rl_single_gpu(mock_run_rl: MagicMock, tmp_path: Path, monkeypatch) -> None:
     config_paths = _build_rl_config(tmp_path)
     output_dir = tmp_path / "rl_out"
 
     result = runner.invoke(app, ["rl", *_cli_args(config_paths, "--output-dir", str(output_dir), "--single-gpu")])
 
     assert result.exit_code == 0, result.output
-    mock_rl_local.assert_called_once()
+    mock_run_rl.assert_called_once()
 
     import os
 
@@ -130,8 +130,8 @@ def test_rl_single_gpu(mock_rl_local: MagicMock, tmp_path: Path, monkeypatch) ->
     assert os.environ.get("MEDARC_SINGLE_GPU") == "1"
 
 
-@patch("medarc_rl.launchers.rl_local.rl_local")
-def test_rl_multi_gpu(mock_rl_local: MagicMock, tmp_path: Path) -> None:
+@patch("medarc_rl.launchers.rl_local.rl")
+def test_rl_multi_gpu(mock_run_rl: MagicMock, tmp_path: Path) -> None:
     config_paths = _build_rl_config(tmp_path)
     output_dir = tmp_path / "rl_out_multi"
 
@@ -140,7 +140,7 @@ def test_rl_multi_gpu(mock_rl_local: MagicMock, tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.output
-    mock_rl_local.assert_called_once()
+    mock_run_rl.assert_called_once()
 
     import os
 
@@ -216,8 +216,8 @@ def test_sft_accepts_primerl_style_overrides_and_wrapper_output_dir_wins(mock_ru
     assert resolved["output_dir"] == str(output_dir.resolve())
 
 
-@patch("medarc_rl.launchers.rl_local.rl_local")
-def test_rl_accepts_primerl_style_overrides_and_wrapper_gpu_split_wins(mock_rl_local: MagicMock, tmp_path: Path) -> None:
+@patch("medarc_rl.launchers.rl_local.rl")
+def test_rl_accepts_primerl_style_overrides_and_wrapper_gpu_split_wins(mock_run_rl: MagicMock, tmp_path: Path) -> None:
     config_paths = _build_rl_config(tmp_path)
     output_dir = tmp_path / "rl_out_override_split"
 
@@ -244,24 +244,24 @@ def test_rl_accepts_primerl_style_overrides_and_wrapper_gpu_split_wins(mock_rl_l
     )
 
     assert result.exit_code == 0, result.output
-    mock_rl_local.assert_called_once()
+    mock_run_rl.assert_called_once()
 
-    config = mock_rl_local.call_args[0][0]
+    config = mock_run_rl.call_args[0][0]
     assert config.inference is not None
     assert config.inference.gpu_memory_utilization == 0.33
     assert config.deployment.num_train_gpus == 2
     assert config.deployment.num_infer_gpus == 2
 
 
-@patch("medarc_rl.launchers.rl_local.rl_local")
-def test_rl_resume_sets_resume_step_latest(mock_rl_local: MagicMock, tmp_path: Path) -> None:
+@patch("medarc_rl.launchers.rl_local.rl")
+def test_rl_resume_sets_resume_step_latest(mock_run_rl: MagicMock, tmp_path: Path) -> None:
     config_paths = _build_rl_config(tmp_path)
     output_dir = tmp_path / "rl_out_resume"
 
     result = runner.invoke(app, ["rl", *_cli_args(config_paths, "--output-dir", str(output_dir), "--resume")])
 
     assert result.exit_code == 0, result.output
-    mock_rl_local.assert_called_once()
-    config = mock_rl_local.call_args[0][0]
+    mock_run_rl.assert_called_once()
+    config = mock_run_rl.call_args[0][0]
     assert config.ckpt is not None
     assert config.ckpt.resume_step == -1

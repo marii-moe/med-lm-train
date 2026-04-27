@@ -116,7 +116,7 @@ def rl(
 ) -> None:  # fmt: skip
     from prime_rl.configs.rl import RLConfig
 
-    from medarc_rl.launchers.rl_local import rl_local
+    from medarc_rl.launchers.rl_local import rl as run_rl
 
     config_tomls = list(config or [])
     if not config_tomls:
@@ -169,7 +169,7 @@ def rl(
     os.environ["MEDARC_SINGLE_GPU"] = "1" if single_gpu else "0"
 
     typer.echo(f"Starting RL on {gpus} GPU(s) (single_gpu={single_gpu})")
-    rl_local(config)
+    run_rl(config)
 
 
 if __name__ == "__main__":

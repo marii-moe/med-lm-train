@@ -12,7 +12,7 @@ dependencies = [
     "typer>=0.24.1",
     "verifiers",
     "wandb==0.25.1",
-    "vllm>=0.17,<0.18"
+    "vllm>=0.19.0"
 ]
 
 [project.optional-dependencies]
@@ -39,18 +39,17 @@ module-root = ""
 [tool.uv.sources]
 prime-rl = { path = "prime-rl", editable = true }
 torch = { index = "pytorch-cu128" }
-transformers = { git = "https://github.com/huggingface/transformers.git", rev = "5c1c72b" }
-flash_attn_3 = { index = "flash-attn-3-cu128-torch2100" }
-
-[[tool.uv.index]]
-name = "flash-attn-3-cu128-torch2100"
-url = "https://windreamer.github.io/flash-attention3-wheels/cu128_torch2100"
-format = "flat"
-explicit = true
+transformers = { git = "https://github.com/huggingface/transformers.git", rev = "c1c3424" }
+flash_attn_3 = { index = "pytorch-cu128-test" }
 
 [[tool.uv.index]]
 name = "pytorch-cu128"
 url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128-test"
+url = "https://download.pytorch.org/whl/test/cu128"
 explicit = true
 
 [dependency-groups]
