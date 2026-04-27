@@ -82,12 +82,16 @@ impl = "auto"
 attn = "flash_attention_3"
 seq_len = 9216
 optimization_dtype = "bfloat16"
+# reshard_after_forward = true maybe add this for qwen3.5? 
 
 [trainer.model.ac]
 mode = "full"
 freq = 2
 
-[trainer.model.compile]
+# [trainer.model.compile] can't use with qwen3.5
+
+[weight_broadcast]
+type = "filesystem"
 
 [trainer.model.lora]
 alpha = 64
