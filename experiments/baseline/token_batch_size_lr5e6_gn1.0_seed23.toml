@@ -9,7 +9,7 @@ num_infer_gpus = 4
 
 [wandb]
 project = "baseline"
-name = "token_batch_size_lr5e6_gn0.1_seed7"
+name = "token_batch_size_lr5e6_gn1.0_seed23"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
@@ -21,7 +21,7 @@ max_inflight_rollouts = 512
 max_concurrent = 96
 
 [orchestrator.model.lora]
-name = "token_batch_size_lr5e6_gn0.1_seed7"
+name = "token_batch_size_lr5e6_gn1.0_seed23"
 
 [orchestrator.sampling]
 max_tokens = 1024
@@ -30,17 +30,17 @@ temperature = 1.0
 [[orchestrator.env]]
 id = "medqa"
 name = "medqa"
-args = { train_answer_formats = "random", training_shuffle_answers = true, training_seed = 7 }
+args = { train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 [[orchestrator.env]]
 id = "med_mcqa"
 name = "med_mcqa"
-args = { train_answer_formats = "random", training_shuffle_answers = true, training_seed = 7 }
+args = { train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 [[orchestrator.env]]
 id = "pubmedqa"
 name = "pubmedqa"
-args = { train_answer_formats = "random", training_shuffle_answers = true, training_seed = 7 }
+args = { train_answer_formats = "random", training_shuffle_answers = true, training_seed = 23 }
 
 #[[orchestrator.env]] not available at time.
 #id = "medcalc-bench"
@@ -95,7 +95,7 @@ save_adapter_separately = true #required for https://github.com/PrimeIntellect-a
 
 [trainer.optim]
 lr = 5e-6
-max_norm = 0.1
+max_norm = 1.0
 
 [trainer.scheduler]
 type = "linear"
