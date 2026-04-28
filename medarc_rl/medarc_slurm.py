@@ -167,16 +167,40 @@ def _load_rl_config(
     config_tomls: list[Path],
     output_dir: Path | None,
     *,
-    train_gpus: int,
-    infer_gpus: int,
+    single_gpu: bool,
+    train_gpus: int | None,
+    infer_gpus: int | None,
+    teacher_gpus: int | None,
     extra_cli_args: list[str] | None = None,
 ) -> RLConfig:
-    kwargs: dict[str, Any] = {
-        "extra_cli_args": extra_cli_args,
-        "deployment": {"type": "single_node", "num_train_gpus": train_gpus, "num_infer_gpus": infer_gpus},
-    }
+    deployment_override: dict[str, Any] = {"type": "single_node"}
+    if train_gpus is not None:
+        deployment_override["num_train_gpus"] = train_gpus
+    if infer_gpus is not None:
+        deployment_override["num_infer_gpus"] = infer_gpus
+    if teacher_gpus is not None:
+        deployment_override["num_teacher_gpus"] = teacher_gpus
+
+    kwargs: dict[str, Any] = {"extra_cli_args": extra_cli_args, "deployment": deployment_override}
     if output_dir is not None:
         kwargs["output_dir"] = output_dir
+
+    config = _load_settings_from_toml(RLConfig, config_tomls, **kwargs)
+
+    if single_gpu and (config.deployment.num_teacher_gpus or 0) > 0:
+        raise typer.BadParameter(
+            "--single-gpu does not support teacher inference GPUs.",
+            param_hint="CONFIG_TOML/--single-gpu/--teacher-gpus",
+        )
+
+    final_deployment = {
+        "type": "single_node",
+        "gpus_per_node": config.deployment.gpus_per_node,
+        "num_train_gpus": 1 if single_gpu else config.deployment.num_train_gpus,
+        "num_infer_gpus": 1 if single_gpu else config.deployment.num_infer_gpus,
+        "num_teacher_gpus": None if single_gpu else config.deployment.num_teacher_gpus,
+    }
+    kwargs["deployment"] = final_deployment
     return _load_settings_from_toml(RLConfig, config_tomls, **kwargs)
 
 
@@ -350,9 +374,10 @@ def rl(
     ctx: typer.Context,
     output_dir: Annotated[Path | None, Option("--output-dir", file_okay=False, dir_okay=True, help="Optional output directory for generated artifacts (configs/ and rl.sh). Overrides output_dir from TOML when set.", rich_help_panel=PANEL_INPUTS)] = None,
     config: Annotated[list[Path] | None, Option("--config", "--config-toml", help="One or more PRIME-RL RL TOMLs. Repeat `--config` to layer files with later files overriding earlier ones.", rich_help_panel=PANEL_INPUTS)] = None,
-    single_gpu: Annotated[bool, Option("--single-gpu", help="Run trainer and inference on the same single GPU (shared). Overrides --train-gpus/--infer-gpus to 1/1.", rich_help_panel=PANEL_COMPUTE)] = False,
-    train_gpus: Annotated[int, Option("--train-gpus", min=1, max=4, help="Number of GPUs reserved for trainer processes (1..4). Total GPUs is train + infer.", rich_help_panel=PANEL_COMPUTE)] = 1,
-    infer_gpus: Annotated[int, Option("--infer-gpus", min=1, max=7, help="Number of GPUs reserved for local inference server (1..7). Total GPUs is train + infer.", rich_help_panel=PANEL_COMPUTE)] = 1,
+    single_gpu: Annotated[bool, Option("--single-gpu", help="Run trainer and inference on the same single GPU (shared). Overrides train/infer allocation to 1/1 and does not allow teacher GPUs.", rich_help_panel=PANEL_COMPUTE)] = False,
+    train_gpus: Annotated[int | None, Option("--train-gpus", min=1, max=4, help="Number of GPUs reserved for trainer processes (1..4). When omitted, uses deployment.num_train_gpus from TOML or PRIME-RL's default.", rich_help_panel=PANEL_COMPUTE)] = None,
+    infer_gpus: Annotated[int | None, Option("--infer-gpus", min=1, max=7, help="Number of GPUs reserved for local inference server (1..7). When omitted, uses deployment.num_infer_gpus from TOML or PRIME-RL's default.", rich_help_panel=PANEL_COMPUTE)] = None,
+    teacher_gpus: Annotated[int | None, Option("--teacher-gpus", min=0, max=7, help="Number of GPUs reserved for teacher inference (0..7). When omitted, uses deployment.num_teacher_gpus from TOML if set.", rich_help_panel=PANEL_COMPUTE)] = None,
     cpus_per_gpu: Annotated[int, Option("--cpus-per-gpu", min=1, max=32, help="Number of CPUs to allocate per GPU (sets SLURM --cpus-per-gpu).", rich_help_panel=PANEL_COMPUTE)] = 16,
     job_name: Annotated[str | None, Option("--job-name", help="SLURM job name. Defaults to '<config stem>-rl'.", rich_help_panel=PANEL_SUBMISSION)] = None,
     account: Annotated[Account, Option("--account", help="SLURM account to pass to sbatch.", rich_help_panel=PANEL_SUBMISSION)] = Account.TRAINING,
@@ -377,19 +402,6 @@ def rl(
     hf_cache_dir = _default_hf_cache_dir(project_dir, hf_cache_dir)
     resolved_config_paths = [path.expanduser().resolve() for path in config_tomls]
     job_name = job_name or f"{resolved_config_paths[-1].stem}-rl"
-    train_gpus = 1 if single_gpu else train_gpus
-    infer_gpus = 1 if single_gpu else infer_gpus
-    gpus = 1 if single_gpu else (train_gpus + infer_gpus)
-
-    if (not single_gpu and gpus < 2) or gpus > 8:
-        raise typer.BadParameter(
-            (
-                f"Total GPUs must be between 2 and 8, got train_gpus ({train_gpus}) + "
-                f"infer_gpus ({infer_gpus}) = {train_gpus + infer_gpus}."
-            ),
-            param_hint="--train-gpus/--infer-gpus",
-        )
-
     if mail is None and mail_user is not None:
         mail = MailSetting.ALL
     if mail is not None and not mail_user:
@@ -399,15 +411,32 @@ def rl(
         config = _load_rl_config(
             resolved_config_paths,
             output_dir_override,
+            single_gpu=single_gpu,
             train_gpus=train_gpus,
             infer_gpus=infer_gpus,
+            teacher_gpus=teacher_gpus,
             extra_cli_args=extra_config_args(ctx, positional_count=0),
         )
     except ValidationError as e:
         raise typer.BadParameter(
             f"RL config validation failed:\n{e}",
-            param_hint="CONFIG_TOML/--train-gpus/--infer-gpus",
+            param_hint="CONFIG_TOML/--train-gpus/--infer-gpus/--teacher-gpus",
         ) from e
+
+    resolved_train_gpus = config.deployment.num_train_gpus
+    resolved_infer_gpus = config.deployment.num_infer_gpus
+    resolved_teacher_gpus = config.deployment.num_teacher_gpus or 0
+    gpus = 1 if single_gpu else (resolved_train_gpus + resolved_infer_gpus + resolved_teacher_gpus)
+
+    if (not single_gpu and gpus < 2) or gpus > 8:
+        raise typer.BadParameter(
+            (
+                f"Total GPUs must be between 2 and 8, got train_gpus ({resolved_train_gpus}) + "
+                f"infer_gpus ({resolved_infer_gpus}) + teacher_gpus ({resolved_teacher_gpus}) = {gpus}."
+            ),
+            param_hint="CONFIG_TOML/--train-gpus/--infer-gpus/--teacher-gpus",
+        )
+
     _enable_rl_resume(config, enabled=slurm_resume)
     if single_gpu and getattr(config.trainer.weight_broadcast, "type", None) == "nccl":
         raise typer.BadParameter(

@@ -64,7 +64,13 @@ def _build_sft_inherited_config(tmp_path: Path) -> tuple[Path, Path]:
     return base, child
 
 
-def _build_rl_inherited_config(tmp_path: Path, *, weight_broadcast_type: str = "nccl", cp: int = 2) -> tuple[Path, Path]:
+def _build_rl_inherited_config(
+    tmp_path: Path,
+    *,
+    weight_broadcast_type: str = "nccl",
+    cp: int = 2,
+    deployment_toml: str = "",
+) -> tuple[Path, Path]:
     base = _write(
         tmp_path / "rl_base.toml",
         f"""
@@ -76,6 +82,8 @@ def _build_rl_inherited_config(tmp_path: Path, *, weight_broadcast_type: str = "
         [inference.parallel]
         tp = 1
         dp = 3
+
+        {deployment_toml}
         """,
     )
     child = _write(
@@ -203,6 +211,34 @@ def test_rl_defaults_split_to_one_and_one(tmp_path: Path) -> None:
     assert "#SBATCH --gpus-per-task=2" in script
 
 
+def test_rl_uses_toml_deployment_gpu_split_and_teacher_gpus(tmp_path: Path) -> None:
+    config_paths = _build_rl_inherited_config(
+        tmp_path,
+        cp=1,
+        deployment_toml="""
+        [deployment]
+        num_train_gpus = 2
+        num_infer_gpus = 3
+        num_teacher_gpus = 2
+        """,
+    )
+    output_dir = tmp_path / "rl_out_from_toml_deployment"
+
+    result = runner.invoke(
+        app,
+        ["rl", *_cli_args(config_paths, "--output-dir", str(output_dir), "--dry-run")],
+    )
+
+    assert result.exit_code == 0, result.output
+    script = (output_dir / "rl.sh").read_text(encoding="utf-8")
+    rl_cfg = _read_toml(output_dir / "configs" / "rl.toml")
+
+    assert "#SBATCH --gpus-per-task=7" in script
+    assert rl_cfg["deployment"]["num_train_gpus"] == 2
+    assert rl_cfg["deployment"]["num_infer_gpus"] == 3
+    assert rl_cfg["deployment"]["num_teacher_gpus"] == 2
+
+
 def test_rl_rejects_total_gpu_count_above_eight(tmp_path: Path) -> None:
     config_paths = _build_rl_inherited_config(tmp_path)
     output_dir = tmp_path / "rl_out_bad_total"
@@ -213,8 +249,7 @@ def test_rl_rejects_total_gpu_count_above_eight(tmp_path: Path) -> None:
     )
 
     assert result.exit_code != 0
-    assert "between 2" in result.output
-    assert "and 8" in result.output
+    assert "Total GPU count (9 = 4 train + 5 infer + 0 teacher) exceeds" in result.output
 
 
 def test_rl_rejects_train_gpus_above_four(tmp_path: Path) -> None:
@@ -340,7 +375,16 @@ def test_sft_accepts_primerl_style_overrides_and_wrapper_output_dir_wins(tmp_pat
 
 
 def test_rl_accepts_primerl_style_overrides_and_wrapper_gpu_split_wins(tmp_path: Path) -> None:
-    config_paths = _build_rl_inherited_config(tmp_path, cp=1)
+    config_paths = _build_rl_inherited_config(
+        tmp_path,
+        cp=1,
+        deployment_toml="""
+        [deployment]
+        num_train_gpus = 3
+        num_infer_gpus = 2
+        num_teacher_gpus = 2
+        """,
+    )
     output_dir = tmp_path / "rl_out_overrides"
 
     result = runner.invoke(
@@ -355,6 +399,8 @@ def test_rl_accepts_primerl_style_overrides_and_wrapper_gpu_split_wins(tmp_path:
                 "2",
                 "--infer-gpus",
                 "1",
+                "--teacher-gpus",
+                "1",
                 "--dry-run",
                 "--inference.gpu-memory-utilization",
                 "0.33",
@@ -362,15 +408,40 @@ def test_rl_accepts_primerl_style_overrides_and_wrapper_gpu_split_wins(tmp_path:
                 "4",
                 "--deployment.num-infer-gpus",
                 "4",
+                "--deployment.num-teacher-gpus",
+                "4",
             ),
         ],
     )
 
     assert result.exit_code == 0, result.output
     rl_cfg = _read_toml(output_dir / "configs" / "rl.toml")
+    script = (output_dir / "rl.sh").read_text(encoding="utf-8")
     assert rl_cfg["inference"]["gpu_memory_utilization"] == 0.33
     assert rl_cfg["deployment"]["num_train_gpus"] == 2
     assert rl_cfg["deployment"]["num_infer_gpus"] == 1
+    assert rl_cfg["deployment"]["num_teacher_gpus"] == 1
+    assert "#SBATCH --gpus-per-task=4" in script
+
+
+def test_rl_teacher_gpu_flag_updates_script_and_resolved_config(tmp_path: Path) -> None:
+    config_paths = _build_rl_inherited_config(tmp_path, cp=1)
+    output_dir = tmp_path / "rl_out_teacher_gpus"
+
+    result = runner.invoke(
+        app,
+        ["rl", *_cli_args(config_paths, "--output-dir", str(output_dir), "--teacher-gpus", "2", "--dry-run")],
+    )
+
+    assert result.exit_code == 0, result.output
+
+    script = (output_dir / "rl.sh").read_text(encoding="utf-8")
+    rl_cfg = _read_toml(output_dir / "configs" / "rl.toml")
+
+    assert "#SBATCH --gpus-per-task=4" in script
+    assert rl_cfg["deployment"]["num_train_gpus"] == 1
+    assert rl_cfg["deployment"]["num_infer_gpus"] == 1
+    assert rl_cfg["deployment"]["num_teacher_gpus"] == 2
 
 
 def test_rl_single_gpu_dry_run(tmp_path: Path) -> None:
