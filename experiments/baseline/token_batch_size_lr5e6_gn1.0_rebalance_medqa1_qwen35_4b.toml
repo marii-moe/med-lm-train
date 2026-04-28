@@ -119,6 +119,7 @@ dp = 4
 
 [inference.model]
 max_model_len = 2048
+dtype = "bfloat16"
 
 [ckpt]
 interval = 50
