@@ -100,6 +100,63 @@ def _build_rl_inherited_config(
     return base, child
 
 
+def _build_rl_hard_distill_config(tmp_path: Path) -> tuple[Path]:
+    config = _write(
+        tmp_path / "rl_hard_distill.toml",
+        """
+        max_steps = 2
+
+        [deployment]
+        num_train_gpus = 2
+        num_infer_gpus = 0
+
+        [trainer.loss]
+        type = "sft"
+
+        [orchestrator]
+        use_token_client = false
+
+        [orchestrator.teacher_rollout_model.client]
+        base_url = ["https://teacher.example/v1"]
+        skip_model_check = true
+
+        [orchestrator.teacher_rollout_model.model]
+        name = "teacher-model"
+        """,
+    )
+    return (config,)
+
+
+def _build_rl_hard_distill_nccl_config(tmp_path: Path) -> tuple[Path]:
+    config = _write(
+        tmp_path / "rl_hard_distill_nccl.toml",
+        """
+        max_steps = 2
+
+        [deployment]
+        num_train_gpus = 2
+        num_infer_gpus = 0
+
+        [trainer.loss]
+        type = "sft"
+
+        [weight_broadcast]
+        type = "nccl"
+
+        [orchestrator]
+        use_token_client = false
+
+        [orchestrator.teacher_rollout_model.client]
+        base_url = ["https://teacher.example/v1"]
+        skip_model_check = true
+
+        [orchestrator.teacher_rollout_model.model]
+        name = "teacher-model"
+        """,
+    )
+    return (config,)
+
+
 def test_sft_dry_run_generates_script_and_resolved_toml(tmp_path: Path) -> None:
     config_paths = _build_sft_inherited_config(tmp_path)
     output_dir = tmp_path / "sft_out"
@@ -317,6 +374,43 @@ def test_rl_dry_run_generates_normalized_subconfigs_and_safe_script(tmp_path: Pa
     assert "orchestrator @" not in script
     assert "inference @" not in script
     assert "uv sync" not in script
+
+
+def test_rl_dry_run_allows_hard_distill_without_inference(tmp_path: Path) -> None:
+    config_paths = _build_rl_hard_distill_config(tmp_path)
+    output_dir = tmp_path / "rl_out_hard_distill"
+
+    result = runner.invoke(
+        app,
+        ["rl", *_cli_args(config_paths, "--output-dir", str(output_dir), "--dry-run")],
+    )
+
+    assert result.exit_code == 0, result.output
+
+    script = (output_dir / "rl.sh").read_text(encoding="utf-8")
+    rl_cfg = _read_toml(output_dir / "configs" / "rl.toml")
+
+    assert "#SBATCH --gpus-per-task=2" in script
+    assert 'python -m medarc_rl.launchers.rl_local @ "$CONFIG_DIR/rl.toml"' in script
+    assert "inference" not in rl_cfg
+    assert rl_cfg["deployment"]["num_train_gpus"] == 2
+    assert rl_cfg["deployment"]["num_infer_gpus"] == 0
+    assert rl_cfg["trainer"]["loss"]["type"] == "sft"
+    assert rl_cfg["orchestrator"]["teacher_rollout_model"]["model"]["name"] == "teacher-model"
+
+
+def test_rl_rejects_hard_distill_with_nccl_broadcast_and_no_inference(tmp_path: Path) -> None:
+    config_paths = _build_rl_hard_distill_nccl_config(tmp_path)
+    output_dir = tmp_path / "rl_out_hard_distill_nccl"
+
+    result = runner.invoke(
+        app,
+        ["rl", *_cli_args(config_paths, "--output-dir", str(output_dir), "--dry-run")],
+    )
+
+    assert result.exit_code != 0
+    assert "does not" in result.output
+    assert "support NCCL weight broadcast without a local inference server" in result.output
 
 
 def test_rl_dry_run_train_gpu_path_and_filesystem_broadcast(tmp_path: Path) -> None:

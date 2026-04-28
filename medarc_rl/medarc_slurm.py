@@ -193,11 +193,12 @@ def _load_rl_config(
             param_hint="CONFIG_TOML/--single-gpu/--teacher-gpus",
         )
 
+    resolved_num_infer_gpus = 0 if config.inference is None else config.deployment.num_infer_gpus
     final_deployment = {
         "type": "single_node",
         "gpus_per_node": config.deployment.gpus_per_node,
         "num_train_gpus": 1 if single_gpu else config.deployment.num_train_gpus,
-        "num_infer_gpus": 1 if single_gpu else config.deployment.num_infer_gpus,
+        "num_infer_gpus": 1 if single_gpu else resolved_num_infer_gpus,
         "num_teacher_gpus": None if single_gpu else config.deployment.num_teacher_gpus,
     }
     kwargs["deployment"] = final_deployment
@@ -258,8 +259,11 @@ def _write_rl_outputs(
     mail_user: str | None,
     slurm_resume: bool,
 ) -> Path:
-    if config.inference is None:
-        raise typer.BadParameter("RL requires an [inference] config.", param_hint="CONFIG_TOML")
+    if config.inference is None and config.orchestrator.teacher_rollout_model is None:
+        raise typer.BadParameter(
+            "RL requires an [inference] config unless orchestrator.teacher_rollout_model is configured.",
+            param_hint="CONFIG_TOML",
+        )
 
     config_dir = output_dir / "configs"
     _write_toml(config_dir / "rl.toml", config.model_dump(exclude_none=True, mode="json"))
@@ -438,6 +442,13 @@ def rl(
         )
 
     _enable_rl_resume(config, enabled=slurm_resume)
+    if config.inference is None and config.orchestrator.teacher_rollout_model is not None:
+        if getattr(config.trainer.weight_broadcast, "type", None) == "nccl":
+            raise typer.BadParameter(
+                "orchestrator.teacher_rollout_model does not support NCCL weight broadcast without a local inference server. "
+                "Use filesystem broadcast.",
+                param_hint="CONFIG_TOML",
+            )
     if single_gpu and getattr(config.trainer.weight_broadcast, "type", None) == "nccl":
         raise typer.BadParameter(
             "--single-gpu does not support NCCL weight broadcast. Use filesystem broadcast or 2+ GPUs.",
