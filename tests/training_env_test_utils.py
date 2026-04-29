@@ -13,7 +13,9 @@ def timing_state() -> dict[str, float]:
 
 
 def present_row(env, row: dict[str, Any]):
-    return asyncio.run(env.setup_state(State(input=deepcopy(row))))
+    state = State(input=deepcopy(row))
+    asyncio.run(env.setup_state(state))
+    return state
 
 
 def completion_for_format(answer_format: str, answer: str) -> list[dict[str, str]]:

@@ -107,13 +107,13 @@ class TrainEvalRoutingEnv(vf.SingleTurnEnv):
             return self.eval_env
         return self.train_env
 
-    async def setup_state(self, state):
-        state = apply_train_answer_reshuffle(
+    async def setup_state(self, state) -> None:
+        apply_train_answer_reshuffle(
             state,
             format_training_question=self.format_training_question,
             use_think=self.use_think,
         )
-        return await self._select_env_for_state(state).setup_state(state)
+        await self._select_env_for_state(state).setup_state(state)
 
     def get_env_for_task(self, task_name: str) -> vf.Environment:
         valid_names = {
