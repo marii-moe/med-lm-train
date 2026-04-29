@@ -102,7 +102,6 @@ max_norm = 1.0
 [inference]
 enable_lora = true
 gpu_memory_utilization = 0.9
-enforce_eager = true
 
 [inference.parallel]
 tp = 1
@@ -110,6 +109,7 @@ dp = 6
 
 [inference.model]
 max_model_len = 2048
+enforce_eager = true
 
 [ckpt]
 interval = 50
