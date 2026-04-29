@@ -61,7 +61,7 @@ rollouts_per_example = 8
 [orchestrator.eval]
 interval = 200
 rollouts_per_example = 1
-eval_base_model = true
+eval_base_model = false
 
 [orchestrator.eval.sampling]
 seed = 42
