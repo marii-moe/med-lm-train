@@ -9,6 +9,7 @@ dependencies = [
     "medarc-verifiers",
     "prime-rl",
     "tomli-w>=1.2.0",
+    "torchvision",
     "typer>=0.24.1",
     "verifiers",
     "wandb==0.25.1",
@@ -39,6 +40,7 @@ module-root = ""
 [tool.uv.sources]
 prime-rl = { path = "prime-rl", editable = true }
 torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
 transformers = { git = "https://github.com/huggingface/transformers.git", rev = "c1c3424" }
 flash_attn_3 = { index = "pytorch-cu128-test" }
 
