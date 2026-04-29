@@ -1,4 +1,4 @@
-max_steps = 0
+max_steps = 1
 seq_len = 2048
 max_async_level = 1
 
@@ -95,12 +95,12 @@ rank = 64
 save_adapter_separately = true #required for https://github.com/PrimeIntellect-ai/prime-rl/issues/1707
 
 [trainer.optim]
-lr = 5e-6
+lr = 0.0
 max_norm = 1.0
 
 [trainer.scheduler]
 type = "linear"
-warmup_steps = 100 #10% of max_steps, can be 5% on long training
+warmup_steps = 0
 decay_steps = 0
 
 [inference]
