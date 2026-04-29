@@ -98,10 +98,6 @@ save_adapter_separately = true #required for https://github.com/PrimeIntellect-a
 lr = 0.0
 max_norm = 1.0
 
-[trainer.scheduler]
-type = "linear"
-warmup_steps = 0
-decay_steps = 0
 
 [inference]
 enable_lora = true
