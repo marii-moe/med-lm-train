@@ -53,18 +53,18 @@ seed = 42
 temperature = 0.0
 
 [[orchestrator.eval.env]]
-id = "math500"
+id = "primeintellect/math500"
 
 [[orchestrator.eval.env]]
-id = "aime2024"
+id = "primeintellect/aime2024"
 rollouts_per_example = 32
 
 [[orchestrator.eval.env]]
-id = "aime2025"
+id = "primeintellect/aime2025"
 rollouts_per_example = 32
 
 [[orchestrator.eval.env]]
-id = "aime2026"
+id = "primeintellect/aime2026"
 rollouts_per_example = 32
 
 [trainer.model]
