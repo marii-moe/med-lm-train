@@ -9,7 +9,7 @@ num_infer_gpus = 2
 
 [wandb]
 project = "math"
-name = "reasoning_core_math_evals"
+name = "deepscaler_math_evals"
 
 [model]
 name = "Qwen/Qwen3-4B-Instruct-2507"
@@ -21,15 +21,16 @@ max_inflight_rollouts = 512
 max_concurrent = 96
 
 [orchestrator.model.lora]
-name = "reasoning_core_math_evals"
+name = "deepscaler_math_evals"
 
 [orchestrator.sampling]
 max_tokens = 8192
 temperature = 1.0
 
 [[orchestrator.env]]
-id = "sileod/reasoning-core-env"
-name = "reasoning-core"
+id = "primeintellect/deepscaler"
+name = "deepscaler"
+args = { use_think = false }
 
 [orchestrator.buffer]
 online_difficulty_filtering = true
