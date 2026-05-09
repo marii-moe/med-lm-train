@@ -30,7 +30,10 @@ temperature = 1.0
 [[orchestrator.env]]
 id = "primeintellect/math-env"
 name = "skywork-or1"
-args = { use_think = false,  dataset_name = "PrimeIntellect/Skywork-OR1-RL-Data-v1-math-prime-rl-format", dataset_subset = "default", question_key = "prompt", math_verify_max_workers = 128, math_verify_timeout = 60 }
+args = { dataset_name = "PrimeIntellect/Skywork-OR1-RL-Data", dataset_subset = "default", difficulty_key = "difficulty_deepseek_r1_qwen_7b", min_avg_reward = 1, max_avg_reward = 15, math_verify_max_workers = 128, math_verify_timeout = 60 }
+# difficulty_deepseek_r1_qwen_7b is a count of correct rollouts out of 16 (range 0-16).
+# Filtering to 1-15 removes problems the 7B model never solves (zero gradient signal)
+# and those it always solves (zero advantage), matching the paper's offline difficulty filtering.
 
 [orchestrator.buffer]
 online_difficulty_filtering = true
