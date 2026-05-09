@@ -106,10 +106,6 @@ ipo_mask_high = 0.2
 lr = 1e-6    # from Skywork OR1 repo (actor_rollout_ref.actor.optim.lr=1e-6); using lora so may need tuning
 max_norm = 1.0
 
-[trainer.scheduler]
-type = "linear"
-warmup_steps = 0
-decay_steps = 0
 
 [inference]
 enable_lora = true

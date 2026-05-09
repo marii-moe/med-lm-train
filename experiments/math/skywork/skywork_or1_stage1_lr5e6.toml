@@ -106,10 +106,6 @@ ipo_mask_high = 0.2
 lr = 5e-6    # higher lr variant; paper uses 1e-6 for full fine-tune, 5e-6 may suit lora better
 max_norm = 1.0
 
-[trainer.scheduler]
-type = "linear"
-warmup_steps = 0
-decay_steps = 0
 
 [inference]
 enable_lora = true
