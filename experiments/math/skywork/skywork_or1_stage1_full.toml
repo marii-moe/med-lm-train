@@ -77,15 +77,11 @@ rollouts_per_example = 32
 impl = "auto"
 attn = "flash_attention_3"
 seq_len = 8192
-optim_cpu_offload = true
+fsdp_cpu_offload = true
 
 [trainer.model.ac]
 mode = "full"
 freq = 2
-
-[trainer.model.ac_offloading]
-pin_memory = true
-max_inflight_activations = 5
 
 [trainer.model.compile]
 
