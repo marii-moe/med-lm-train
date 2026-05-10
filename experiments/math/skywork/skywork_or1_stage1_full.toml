@@ -84,6 +84,7 @@ mode = "full"
 freq = 2
 
 [trainer.model.compile]
+fullgraph = true
 
 [trainer.loss]
 type = "default"
