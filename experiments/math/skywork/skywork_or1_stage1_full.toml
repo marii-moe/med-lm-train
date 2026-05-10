@@ -83,8 +83,11 @@ optim_cpu_offload = true
 mode = "full"
 freq = 2
 
+[trainer.model.ac_offloading]
+pin_memory = true
+max_inflight_activations = 5
+
 [trainer.model.compile]
-fullgraph = true
 
 [trainer.loss]
 type = "default"
