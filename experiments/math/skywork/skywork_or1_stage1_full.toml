@@ -76,7 +76,7 @@ rollouts_per_example = 32
 [trainer.model]
 impl = "auto"
 attn = "flash_attention_3"
-seq_len = 9216
+seq_len = 8192
 optim_cpu_offload = true
 
 [trainer.model.ac]
