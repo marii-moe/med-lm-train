@@ -7,7 +7,7 @@ max_async_level = 1
 
 [deployment]
 type = "single_node"
-num_train_gpus = 2
+num_train_gpus = 4
 num_infer_gpus = 2
 
 [wandb]
@@ -77,11 +77,15 @@ rollouts_per_example = 32
 impl = "auto"
 attn = "flash_attention_3"
 seq_len = 8192
-fsdp_cpu_offload = true
+optim_cpu_offload = true
 
 [trainer.model.ac]
 mode = "full"
 freq = 2
+
+[trainer.model.ac_offloading]
+pin_memory = true
+max_inflight_activations = 5
 
 [trainer.model.compile]
 
@@ -102,7 +106,7 @@ gpu_memory_utilization = 0.9
 
 [inference.parallel]
 tp = 1
-dp = 4
+dp = 2
 
 [inference.model]
 max_model_len = 8192
