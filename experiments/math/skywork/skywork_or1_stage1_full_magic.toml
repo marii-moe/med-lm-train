@@ -1,6 +1,8 @@
-# Skywork OR1 Stage 1 reproduction (arXiv:2505.22312) — full fine-tune
+# Skywork OR1 Stage 1 reproduction (arXiv:2505.22312) — full fine-tune, MAGIC loss
 # Stage 1: 8K context, ~540 steps, then continue to stage2 (16K) and stage3 (32K)
-# Key deviations from paper: no adaptive entropy coefficient (not supported in PRIME-RL default loss).
+# Uses Skywork's PPO clipping loss (medarc_rl.losses.skywork_or1). Adaptive entropy
+# coefficient (α_k) is omitted — requires stateful tracking across steps not possible
+# in PRIME-RL's per-sample loss interface.
 max_steps = 660
 seq_len = 8192
 max_async_level = 1
@@ -12,7 +14,7 @@ num_infer_gpus = 2
 
 [wandb]
 project = "math"
-name = "skywork_or1_stage1_full"
+name = "skywork_or1_stage1_full_magic"
 
 [model]
 name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
@@ -90,11 +92,9 @@ max_inflight_activations = 5
 [trainer.model.compile]
 
 [trainer.loss]
-type = "default"
-kl_tau = 0.0    # paper explicitly removes KL penalty; finds it hurts multi-stage training
-adv_tau = 1.0
-ipo_mask_low = 0.2
-ipo_mask_high = 0.2
+type = "custom"
+import_path = "medarc_rl.losses.skywork_or1.loss"
+kwargs = { clip_eps = 0.2 }  # ε=0.2 from Skywork OR1 / standard PPO
 
 [trainer.optim]
 lr = 1e-6    # from Skywork OR1 repo (actor_rollout_ref.actor.optim.lr=1e-6)
