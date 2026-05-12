@@ -3,7 +3,7 @@
 # Key differences from paper: DeepSeek-R1-Distill-Qwen-7B instead of paper's private Qwen2.5-Math SFT checkpoint;
 # single node (4+2 GPUs) vs 128 H100s; DeepScaler only vs DeepScaler+NuminaMath.
 # Algorithm: REINFORCE with group mean/std advantage normalization, no KL, no clipping.
-max_steps = 1000 #paper is 2500
+max_steps = 2500 #paper is 2500
 seq_len = 8192
 max_async_level = 1  # on-policy: trainer waits for current inference weights
 
