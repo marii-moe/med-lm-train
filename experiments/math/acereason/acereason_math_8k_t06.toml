@@ -1,0 +1,112 @@
+# AceReason-Nemotron 1.1 math Stage 1 (arXiv:2506.13284)
+# Curriculum: 8K → 16K → 24K → 32K; this is Stage 1 (8K).
+# Key differences from paper: DeepSeek-R1-Distill-Qwen-7B instead of paper's private Qwen2.5-Math SFT checkpoint;
+# single node (4+2 GPUs) vs 128 H100s; DeepScaler only vs DeepScaler+NuminaMath.
+# Algorithm: REINFORCE with group mean/std advantage normalization, no KL, no clipping.
+max_steps = 2500 #paper is 2500
+seq_len = 8192
+max_async_level = 1  # on-policy: trainer waits for current inference weights
+
+[deployment]
+type = "single_node"
+num_train_gpus = 4
+num_infer_gpus = 2
+
+[wandb]
+project = "math"
+name = "acereason_math_8k_t06"
+
+[model]
+name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
+
+[orchestrator]
+token_batch_size = 786432
+rollouts_per_example = 8   # paper uses 8 at 8K context
+max_inflight_rollouts = 128
+max_concurrent = 64
+
+[orchestrator.advantage]
+type = "custom"
+import_path = "medarc_rl.losses.acereason.advantage"
+
+[orchestrator.sampling]
+max_tokens = 8192
+temperature = 0.6  # ablation: paper found 0.6 causes entropy to stay below 0.2 (under-exploration vs 0.85 baseline)
+
+[[orchestrator.env]]
+id = "primeintellect/deepscaler"
+
+[orchestrator.buffer]
+online_difficulty_filtering = true
+easy_threshold = 0.8
+hard_threshold = 0.2
+easy_fraction = 0.0
+hard_fraction = 0.0
+
+[orchestrator.val]
+interval = 50
+num_examples = 512
+rollouts_per_example = 8
+
+[orchestrator.eval]
+interval = 100
+rollouts_per_example = 1
+eval_base_model = true
+
+[orchestrator.eval.sampling]
+seed = 42
+temperature = 0.6  # paper uses 0.6 for evaluation inference
+
+[[orchestrator.eval.env]]
+id = "primeintellect/math500"
+
+[[orchestrator.eval.env]]
+id = "primeintellect/aime2024"
+rollouts_per_example = 64
+
+[[orchestrator.eval.env]]
+id = "primeintellect/aime2025"
+rollouts_per_example = 64
+
+[[orchestrator.eval.env]]
+id = "primeintellect/aime2026"
+rollouts_per_example = 64
+
+[trainer.model]
+impl = "auto"
+attn = "flash_attention_3"
+seq_len = 8192
+optim_cpu_offload = true
+
+[trainer.model.ac]
+mode = "full"
+freq = 2
+
+[trainer.model.ac_offloading]
+pin_memory = true
+max_inflight_activations = 10
+
+[trainer.model.compile]
+
+[trainer.loss]
+type = "custom"
+import_path = "medarc_rl.losses.acereason.loss"
+
+[trainer.optim]
+lr = 1e-6   # from paper (math RL phase)
+max_norm = 1.0
+
+[inference]
+enable_lora = false
+gpu_memory_utilization = 0.9
+
+[inference.parallel]
+tp = 1
+dp = 2
+
+[inference.model]
+max_model_len = 8192
+
+[ckpt]
+interval = 50
+keep_last = 2
